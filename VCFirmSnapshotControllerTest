@@ -1,0 +1,927 @@
+@isTest
+public class TestVCFirmSnapshot{
+    @isTest
+    public static void testVCFirmSnapshotDefaults(){
+        Account firm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert firm;
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(0, snapshot.borrowers.size());
+        System.assertEquals(0, snapshot.depositors.size());
+        System.assertEquals(0, snapshot.pipelineBorrowers.size());
+        System.assertEquals(0, snapshot.pipelineNonBorrowers.size());
+        System.assertEquals(0, snapshot.lostLoans.size());
+        System.assertEquals(0, snapshot.lostDeposits.size());
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(0, snapshot.borrowerTotalCommitments);
+        System.assertEquals(0, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(0, snapshot.depositorTotalDeposits);
+
+        Test.stopTest();
+    }
+    @isTest
+    public static void testVCFirmSnapshotBorrowers(){
+        Account firm = setupVCWithBorrowers();
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(2, snapshot.borrowers.size());
+        System.assertEquals('Fund Account To Include', snapshot.borrowers[0].accountName);
+        System.assertEquals('Fund Loan Facility', snapshot.borrowers[0].facilityType);
+        System.assertEquals(200000.02, snapshot.borrowers[0].totalCommitments);
+        System.assertEquals(2345678.90, snapshot.borrowers[0].totalOutstandings);
+        System.assertEquals('10', snapshot.borrowers[0].CRR);
+        System.assertEquals('VC Partner Account To Include', snapshot.borrowers[1].accountName);
+        System.assertEquals('Partner Loan Facility', snapshot.borrowers[1].facilityType);
+        System.assertEquals(100000.01, snapshot.borrowers[1].totalCommitments);
+        System.assertEquals(1234567.89, snapshot.borrowers[1].totalOutstandings);
+        System.assertEquals('20', snapshot.borrowers[1].CRR);
+
+        System.assertEquals(0, snapshot.depositors.size());
+        System.assertEquals(0, snapshot.pipelineBorrowers.size());
+        System.assertEquals(0, snapshot.pipelineNonBorrowers.size());
+        System.assertEquals(0, snapshot.lostLoans.size());
+        System.assertEquals(0, snapshot.lostDeposits.size());
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(300000.03, snapshot.borrowerTotalCommitments);
+        System.assertEquals(3580246.79, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(0, snapshot.depositorTotalDeposits);
+
+// need to test deposits and reserves
+
+        Test.stopTest();
+    }
+    @isTest
+    public static void testVCFirmSnapshotDepositors(){
+        Account firm = setupVCWithDepositors();
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(2, snapshot.depositors.size());
+        System.assertEquals('Fund Account To Include', snapshot.depositors[0].accountName);
+        System.assertEquals(200000.02, snapshot.depositors[0].collectedBalance);
+        System.assertEquals(2345678.90, snapshot.depositors[0].averageBalance);
+        System.assertEquals('VC Partner Account To Include', snapshot.depositors[1].accountName);
+        System.assertEquals(100000.01, snapshot.depositors[1].collectedBalance);
+        System.assertEquals(1234567.89, snapshot.depositors[1].averageBalance);
+
+        System.assertEquals(0, snapshot.borrowers.size());
+        System.assertEquals(0, snapshot.pipelineBorrowers.size());
+        System.assertEquals(0, snapshot.pipelineNonBorrowers.size());
+        System.assertEquals(0, snapshot.lostLoans.size());
+        System.assertEquals(0, snapshot.lostDeposits.size());
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(0, snapshot.borrowerTotalCommitments);
+        System.assertEquals(0, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(300000.03, snapshot.depositorTotalDeposits);
+
+        Test.stopTest();
+    }
+    @isTest
+    public static void testVCFirmSnapshotPipelineBorrowers(){
+        Account firm = setupVCWithPipelineBorrowers();
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(4, snapshot.pipelineBorrowers.size());
+        // pipeline borrowers are sorted by stage then account name
+        System.assertEquals('1.0 Prospecting/Bus. Development', snapshot.pipelineBorrowers[0].stage);
+        System.assertEquals('Fund Account To Include 2', snapshot.pipelineBorrowers[0].accountName);
+        System.assertEquals('EOI', snapshot.pipelineBorrowers[0].actionType);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineBorrowers[0].dateApproved);
+        System.assertEquals(100000.01, snapshot.pipelineBorrowers[0].TPL);
+        System.assertEquals(null, snapshot.pipelineBorrowers[0].newEstOutstandings);
+        System.assertEquals(12000.00, snapshot.pipelineBorrowers[0].newTotalDeposits);
+
+        System.assertEquals('1.0 Prospecting/Bus. Development', snapshot.pipelineBorrowers[1].stage);
+        System.assertEquals('VC Partner Account To Include', snapshot.pipelineBorrowers[1].accountName);
+        System.assertEquals('EOI', snapshot.pipelineBorrowers[1].actionType);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineBorrowers[1].dateApproved);
+        System.assertEquals(100000.01, snapshot.pipelineBorrowers[1].TPL);
+        System.assertEquals(50000.00, snapshot.pipelineBorrowers[1].newEstOutstandings);
+        System.assertEquals(8000.00, snapshot.pipelineBorrowers[1].newTotalDeposits);
+
+        System.assertEquals('1.0 Prospecting/Bus. Development', snapshot.pipelineBorrowers[2].stage);
+        System.assertEquals('VC Partner Account To Include 2', snapshot.pipelineBorrowers[2].accountName);
+        System.assertEquals('EOI', snapshot.pipelineBorrowers[2].actionType);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineBorrowers[2].dateApproved);
+        System.assertEquals(100000.01, snapshot.pipelineBorrowers[2].TPL);
+        System.assertEquals(50000.00, snapshot.pipelineBorrowers[2].newEstOutstandings);
+        System.assertEquals(5000.00, snapshot.pipelineBorrowers[2].newTotalDeposits);
+
+        System.assertEquals('3.0 Underwriting', snapshot.pipelineBorrowers[3].stage);
+        System.assertEquals('Fund Account To Include', snapshot.pipelineBorrowers[3].accountName);
+        System.assertEquals('EOI', snapshot.pipelineBorrowers[3].actionType);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineBorrowers[3].dateApproved);
+        System.assertEquals(200000.02, snapshot.pipelineBorrowers[3].TPL);
+        System.assertEquals(null, snapshot.pipelineBorrowers[3].newEstOutstandings);
+        System.assertEquals(2000.00, snapshot.pipelineBorrowers[3].newTotalDeposits);
+
+        System.assertEquals(2, snapshot.borrowers.size());
+        System.assertEquals(0, snapshot.depositors.size());
+        System.assertEquals(0, snapshot.pipelineNonBorrowers.size());
+        System.assertEquals(0, snapshot.lostLoans.size());
+        System.assertEquals(0, snapshot.lostDeposits.size());
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(1200.02, snapshot.borrowerTotalCommitments);
+        System.assertEquals(0, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(0, snapshot.depositorTotalDeposits);
+
+        Test.stopTest();
+    }
+    @isTest
+    public static void testVCFirmSnapshotPipelineNonBorrowersAndLostDeposits(){
+        Account firm = setupVCWithPipelineNonBorrowers();
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(4, snapshot.pipelineNonBorrowers.size());
+        // pipeline non-borrowers are sorted by stage then account name
+        System.assertEquals('Initial Discussions', snapshot.pipelineNonBorrowers[0].stage);
+        System.assertEquals('Fund Account To Include', snapshot.pipelineNonBorrowers[0].accountName);
+        System.assertEquals('Lockbox', snapshot.pipelineNonBorrowers[0].type);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineNonBorrowers[0].closeDate);
+        System.assertEquals(0, snapshot.pipelineNonBorrowers[0].totalDepositAmt);
+        System.assertEquals(6000.00, snapshot.pipelineNonBorrowers[0].estimatedYearlyRevenue);
+
+        System.assertEquals('Initial Discussions', snapshot.pipelineNonBorrowers[1].stage);
+        System.assertEquals('VC Partner Account To Include', snapshot.pipelineNonBorrowers[1].accountName);
+        System.assertEquals('Loan Only', snapshot.pipelineNonBorrowers[1].type);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineNonBorrowers[1].closeDate);
+        System.assertEquals(0, snapshot.pipelineNonBorrowers[1].totalDepositAmt);
+        System.assertEquals(1000.00, snapshot.pipelineNonBorrowers[1].estimatedYearlyRevenue);
+
+        System.assertEquals('Needs Analysis', snapshot.pipelineNonBorrowers[2].stage);
+        System.assertEquals('Fund Account To Include 2', snapshot.pipelineNonBorrowers[2].accountName);
+        System.assertEquals('Positive Pay', snapshot.pipelineNonBorrowers[2].type);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineNonBorrowers[2].closeDate);
+        System.assertEquals(0, snapshot.pipelineNonBorrowers[2].totalDepositAmt);
+        System.assertEquals(9000.00, snapshot.pipelineNonBorrowers[2].estimatedYearlyRevenue);
+
+        System.assertEquals('Proposal', snapshot.pipelineNonBorrowers[3].stage);
+        System.assertEquals('VC Partner Account To Include 2', snapshot.pipelineNonBorrowers[3].accountName);
+        System.assertEquals('Loan & Deposit', snapshot.pipelineNonBorrowers[3].type);
+        System.assertEquals(Datetime.now().date(), snapshot.pipelineNonBorrowers[3].closeDate);
+        System.assertEquals(0, snapshot.pipelineNonBorrowers[3].totalDepositAmt);
+        System.assertEquals(4000.00, snapshot.pipelineNonBorrowers[3].estimatedYearlyRevenue);
+
+        System.assertEquals(0, snapshot.borrowers.size());
+        System.assertEquals(0, snapshot.depositors.size());
+        System.assertEquals(0, snapshot.pipelineBorrowers.size());
+        System.assertEquals(0, snapshot.lostLoans.size());
+
+        System.assertEquals(2, snapshot.lostDeposits.size());
+        // lost deals are sorted by account name
+        System.assertEquals('Fund Account To Include', snapshot.lostDeposits[0].accountName);
+        System.assertEquals('Loan Only', snapshot.lostDeposits[0].type);
+        System.assertEquals(Datetime.now().date(), snapshot.lostDeposits[0].closeDate);
+        System.assertEquals('Could not agree on terms', snapshot.lostDeposits[0].reasonsLost);
+
+        System.assertEquals('VC Partner Account To Include', snapshot.lostDeposits[1].accountName);
+        System.assertEquals('Loan Only', snapshot.lostDeposits[1].type);
+        System.assertEquals(Datetime.now().date(), snapshot.lostDeposits[1].closeDate);
+        System.assertEquals('Bad decision-making', snapshot.lostDeposits[1].reasonsLost);
+
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(0, snapshot.borrowerTotalCommitments);
+        System.assertEquals(0, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(0, snapshot.depositorTotalDeposits);
+
+        Test.stopTest();
+    }
+    @isTest
+    public static void testVCFirmSnapshotLostLoans(){
+        Account firm = setupVCWithLostLoans();
+
+        ApexPages.StandardController sc = new ApexPages.StandardController(firm);
+        VCFirmSnapshot snapshot = new VCFirmSnapshot(sc);
+
+        Test.startTest();
+
+        System.assertEquals(2, snapshot.lostLoans.size());
+        // lost deals are sorted by account name
+        System.assertEquals('Fund Account To Include', snapshot.lostLoans[0].accountName);
+        // loan names are altered by the system
+        //System.assert(snapshot.lostLoans[0].loanName.contains('Fund Account To Include'));
+        System.assertEquals('Withdrawn', snapshot.lostLoans[0].status);
+        System.assertEquals(Datetime.now().date(), snapshot.lostLoans[0].closeDate);
+        System.assertEquals('Fake Bank 2', snapshot.lostLoans[0].lostTo);
+        System.assertEquals('Better Offer 2', snapshot.lostLoans[0].reasonsLost);
+
+        System.assertEquals('VC Partner Account To Include', snapshot.lostLoans[1].accountName);
+        // loan names are altered by the system
+        //System.assert(snapshot.lostLoans[1].loanName.contains('VC Partner Account To Include'));
+        System.assertEquals('Withdrawn', snapshot.lostLoans[1].status);
+        System.assertEquals(Datetime.now().date(), snapshot.lostLoans[1].closeDate);
+        System.assertEquals('Fake Bank', snapshot.lostLoans[1].lostTo);
+        System.assertEquals('Better Offer', snapshot.lostLoans[1].reasonsLost);
+
+        System.assertEquals(0, snapshot.borrowers.size());
+        System.assertEquals(0, snapshot.depositors.size());
+        System.assertEquals(0, snapshot.pipelineBorrowers.size());
+        System.assertEquals(0, snapshot.pipelineNonBorrowers.size());
+        System.assertEquals(0, snapshot.lostDeposits.size());
+        System.assertEquals(0, snapshot.referrals.size());
+        System.assertEquals(0, snapshot.borrowerTotalCommitments);
+        System.assertEquals(0, snapshot.borrowerTotalOutstandings);
+        System.assertEquals(0, snapshot.borrowerTotalDeposits);
+        System.assertEquals(0, snapshot.borrowerTotalReserves);
+        System.assertEquals(0, snapshot.depositorTotalDeposits);
+
+        Test.stopTest();
+    }
+    private static Account setupVCWithBorrowers(){
+        Account VCFirm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert VCFirm;
+
+        List<Account> accountsToInsert = new List<Account>();
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Exclude',
+            Account_Status__c = null)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        insert accountsToInsert;
+
+        List<VC_Partner__c> partnersToInsert = new List<VC_Partner__c>();
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[0].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[1].Id)
+        );
+        insert partnersToInsert;
+
+        List<LLC_BI__Loan__c> loansToInsert = new List<LLC_BI__Loan__c>();
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Loan To Include',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            LLC_BI__Description__c = 'Partner Loan Facility',
+            LLC_BI__Amount__c = 100000.01,
+            LLC_BI__Total_Disbursed__c = 1234567.89,
+            LLC_BI__Risk_Grade__c = '20',
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Loan To Exclude',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = null,
+            LLC_BI__Description__c = 'Partner Loan Facility To Exclude',
+            LLC_BI__Amount__c = 999.99,
+            LLC_BI__Total_Disbursed__c = 0.00,
+            LLC_BI__Risk_Grade__c = '70',
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Loan To Exclude 2',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = null,
+            LLC_BI__Description__c = 'Partner Loan Facility To Exclude',
+            LLC_BI__Amount__c = 999.99,
+            LLC_BI__Total_Disbursed__c = 0.00,
+            LLC_BI__Risk_Grade__c = '70',
+            LLC_BI__Account__c = accountsToInsert[1].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Loan To Include',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            LLC_BI__Description__c = 'Fund Loan Facility',
+            LLC_BI__Amount__c = 200000.02,
+            LLC_BI__Total_Disbursed__c = 2345678.90,
+            LLC_BI__Risk_Grade__c = '10',
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Loan To Exclude',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = null,
+            LLC_BI__Description__c = 'Fund Loan Facility To Exclude',
+            LLC_BI__Amount__c = 600.01,
+            LLC_BI__Total_Disbursed__c = 342.11,
+            LLC_BI__Risk_Grade__c = '30',
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Loan To Exclude 2',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = null,
+            LLC_BI__Description__c = 'Fund Loan Facility To Exclude',
+            LLC_BI__Amount__c = 600.01,
+            LLC_BI__Total_Disbursed__c = 342.11,
+            LLC_BI__Risk_Grade__c = '30',
+            LLC_BI__Account__c = accountsToInsert[3].Id)
+        );
+        insert loansToInsert;
+
+        return VCFirm;
+    }
+    private static Account setupVCWithDepositors(){
+        Account VCFirm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert VCFirm;
+
+        List<Account> accountsToInsert = new List<Account>();
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Exclude',
+            Account_Status__c = null)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude 2',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        insert accountsToInsert;
+
+        List<VC_Partner__c> partnersToInsert = new List<VC_Partner__c>();
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[0].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[1].Id)
+        );
+        insert partnersToInsert;
+
+        LLC_BI__Loan__c loan = new LLC_BI__Loan__c(
+            Name = 'Fund Loan To Cause Deposit Exclusion',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            LLC_BI__Description__c = 'Fund Loan Facility',
+            LLC_BI__Amount__c = 200000.02,
+            LLC_BI__Total_Disbursed__c = 2345678.90,
+            LLC_BI__Risk_Grade__c = '10',
+            LLC_BI__Account__c = accountsToInsert[4].Id);
+        insert loan;
+
+        List<LLC_BI__Deposit__c> depositsToInsert = new List<LLC_BI__Deposit__c>();
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Partner Deposit To Include',
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            Collected_Balance__c = 100000.01,
+            Average_Balance_This_Year__c = 1234567.89,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Partner Deposit To Exclude',
+            LLC_BI__Status__c = null,
+            Collected_Balance__c = 999.99,
+            Average_Balance_This_Year__c = 0.00,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Partner Deposit To Exclude 2',
+            LLC_BI__Status__c = null,
+            Collected_Balance__c = 888.88,
+            Average_Balance_This_Year__c = 1.11,
+            LLC_BI__Account__c = accountsToInsert[1].Id)
+        );
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Fund Deposit To Include',
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            Collected_Balance__c = 200000.02,
+            Average_Balance_This_Year__c = 2345678.90,
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Fund Deposit To Exclude',
+            LLC_BI__Status__c = null,
+            Collected_Balance__c = 600.01,
+            Average_Balance_This_Year__c = 342.11,
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Partner Deposit To Exclude 2',
+            LLC_BI__Status__c = null,
+            Collected_Balance__c = 777.77,
+            Average_Balance_This_Year__c = 1.22,
+            LLC_BI__Account__c = accountsToInsert[3].Id)
+        );
+        // deposit to exclude because Account also has an SOR loan
+        depositsToInsert.add(new LLC_BI__Deposit__c(
+            Name = 'Fund Deposit To Exclude 2',
+            LLC_BI__Status__c = null,
+            Collected_Balance__c = 505.05,
+            Average_Balance_This_Year__c = 942.16,
+            LLC_BI__Account__c = accountsToInsert[4].Id)
+        );
+        insert depositsToInsert;
+
+        return VCFirm;
+    }
+    private static Account setupVCWithPipelineBorrowers(){
+        Account VCFirm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert VCFirm;
+
+        List<Account> accountsToInsert = new List<Account>();
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include 2',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Exclude',
+            Account_Status__c = null)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include 2',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        insert accountsToInsert;
+
+        List<VC_Partner__c> partnersToInsert = new List<VC_Partner__c>();
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[0].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[1].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[2].Id)
+        );
+        insert partnersToInsert;
+
+        List<LLC_BI__Loan__c> loansToInsert = new List<LLC_BI__Loan__c>();
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Loan To Include',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 100000.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 8000.00,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner 1 Loan To Exclude',
+            RecordTypeId = SOR_RECORD_TYPE_ID, // reason for exclusion
+            LLC_BI__Status__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 999.99,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 7000.00,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner 1 Loan To Exclude 2',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = null, // reason for exclusion
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 999.99,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 6000.00,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner 2 Loan To Include',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 100000.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 5000.00,
+            LLC_BI__Account__c = accountsToInsert[1].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner 2 Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = null, // reason for exclusion
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 999.99,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 4000.00,
+            LLC_BI__Account__c = accountsToInsert[1].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner 3 Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = null,
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 100000.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 3000.00,
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 1 Loan To Include',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '3.0 Underwriting',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = null,
+            LLC_BI__Amount__c = 200000.02,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 2000.00,
+            LLC_BI__Account__c = accountsToInsert[3].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 1 Loan To Exclude',
+            RecordTypeId = SOR_RECORD_TYPE_ID, // reason for exclusion
+            LLC_BI__Stage__c = '3.0 Underwriting',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 600.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 1000.00,
+            LLC_BI__Account__c = accountsToInsert[3].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 1 Loan To Exclude 2',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = null, // reason for exclusion
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 600.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 11000.00,
+            LLC_BI__Account__c = accountsToInsert[3].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 2 Loan To Include',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = null,
+            LLC_BI__Amount__c = 100000.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 12000.00,
+            LLC_BI__Account__c = accountsToInsert[4].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 2 Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = null, // reason for exclusion
+            Action_Type__c = 'EOI',
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 999.99,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 13000.00,
+            LLC_BI__Account__c = accountsToInsert[4].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund 3 Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Stage__c = '1.0 Prospecting/Bus. Development',
+            Action_Type__c = null,
+            New_Est_Outstandings__c = 50000.00,
+            LLC_BI__Amount__c = 100000.01,
+            Approval_Date__c = Datetime.now().date(),
+            New_Total_Deposits__c = 14000.00,
+            LLC_BI__Account__c = accountsToInsert[5].Id)
+        );
+        insert loansToInsert;
+
+        return VCFirm;
+    }
+    private static Account setupVCWithPipelineNonBorrowers(){
+        Account VCFirm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert VCFirm;
+
+        List<Account> accountsToInsert = new List<Account>();
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include 2',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Exclude',
+            Account_Status__c = null)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include 2',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        insert accountsToInsert;
+
+        List<VC_Partner__c> partnersToInsert = new List<VC_Partner__c>();
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[0].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[1].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[2].Id)
+        );
+        insert partnersToInsert;
+
+        List<Opportunity> oppsToInsert = new List<Opportunity>();
+        oppsToInsert.add(new Opportunity(
+            Name = 'Partner 1 Opportunity To Include',
+            StageName = 'Initial Discussions',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 1000.00,
+            AccountId = accountsToInsert[0].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Partner 1 Opportunity To Exclude',
+            StageName = 'Closed/Won',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 2000.00,
+            AccountId = accountsToInsert[0].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Partner 1 Lost Opportunity',
+            StageName = 'Closed/Lost',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Reasons_Lost__c = 'Bad decision-making',
+            AccountId = accountsToInsert[0].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Partner 2 Opportunity To Include',
+            StageName = 'Proposal',
+            Type = 'Loan & Deposit',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 4000.00,
+            AccountId = accountsToInsert[1].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Partner 3 Opportunity To Exclude',
+            StageName = 'Open',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 5000.00,
+            AccountId = accountsToInsert[2].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Fund 1 Opportunity To Include',
+            StageName = 'Initial Discussions',
+            Type = 'Lockbox',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 6000.00,
+            AccountId = accountsToInsert[3].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Fund 1 Opportunity To Exclude',
+            StageName = 'Closed/Won',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 7000.00,
+            AccountId = accountsToInsert[3].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Fund 1 Lost Opportunity',
+            StageName = 'Closed/Lost',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Reasons_Lost__c = 'Could not agree on terms',
+            AccountId = accountsToInsert[3].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Fund 2 Opportunity To Include',
+            StageName = 'Needs Analysis',
+            Type = 'Positive Pay',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 9000.00,
+            AccountId = accountsToInsert[4].Id)
+        );
+        oppsToInsert.add(new Opportunity(
+            Name = 'Fund 3 Opportunity To Exclude',
+            StageName = 'Open',
+            Type = 'Loan Only',
+            CloseDate = Datetime.now().date(),
+            Estimated_Yearly_Revenue__c = 10000.00,
+            AccountId = accountsToInsert[5].Id)
+        );
+        insert oppsToInsert;
+
+        return VCFirm;
+    }
+    private static Account setupVCWithLostLoans(){
+        Account VCFirm = new Account(
+            Name = 'Test VC Firm',
+            RecordTypeId = VC_FIRM_RECORD_TYPE_ID,
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS);
+        insert VCFirm;
+
+        List<Account> accountsToInsert = new List<Account>();
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'VC Partner Account To Exclude',
+            Account_Status__c = null)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Include',
+            Account_Status__c = CUSTOMER_ACCOUNT_STATUS,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        accountsToInsert.add(new Account(
+            Name = 'Fund Account To Exclude',
+            Account_Status__c = null,
+            VC_Firm__c = VCFirm.Id,
+            RecordTypeId = FUND_RECORD_TYPE_ID)
+        );
+        insert accountsToInsert;
+
+        List<VC_Partner__c> partnersToInsert = new List<VC_Partner__c>();
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[0].Id)
+        );
+        partnersToInsert.add(new VC_Partner__c(
+            VC_Partner__c = VCFirm.Id,
+            Account__c = accountsToInsert[1].Id)
+        );
+        insert partnersToInsert;
+
+        List<LLC_BI__Loan__c> loansToInsert = new List<LLC_BI__Loan__c>();
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Lost Loan',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Closed_Date__c = Datetime.now().date(),
+            Lost_To__c = 'Fake Bank',
+            Reasons_Lost__c = 'Better Offer',
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Not-Lost Loan',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            LLC_BI__Account__c = accountsToInsert[0].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Not-Lost Loan',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Account__c = accountsToInsert[0].Id,
+            Reasons_Lost__c = 'Withdrawn by Client')
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Partner Lost Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Account__c = accountsToInsert[1].Id,
+            Reasons_Lost__c = 'Withdrawn by Client')
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Lost Loan',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Closed_Date__c = Datetime.now().date(),
+            Lost_To__c = 'Fake Bank 2',
+            Reasons_Lost__c = 'Better Offer 2',
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Not-Lost Loan',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = LOAN_STATUS_OPEN,
+            LLC_BI__Account__c = accountsToInsert[2].Id)
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Not-Lost Loan',
+            RecordTypeId = SOR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Account__c = accountsToInsert[0].Id,
+            Reasons_Lost__c = 'Withdrawn by Client')
+        );
+        loansToInsert.add(new LLC_BI__Loan__c(
+            Name = 'Fund Lost Loan To Exclude',
+            RecordTypeId = CAR_RECORD_TYPE_ID,
+            LLC_BI__Status__c = 'Withdrawn',
+            LLC_BI__Account__c = accountsToInsert[3].Id,
+            Reasons_Lost__c = 'Withdrawn by Client')
+        );
+        insert loansToInsert;
+
+        return VCFirm;
+    }
+    private static final Id VC_FIRM_RECORD_TYPE_ID = 
+        Account.SObjectType.getDescribe().getRecordTypeInfosByName().get('VC Firm').getRecordTypeId();
+    private static final Id FUND_RECORD_TYPE_ID = 
+        Account.SObjectType.getDescribe().getRecordTypeInfosByName().get('Fund').getRecordTypeId();
+    private static final Id SOR_RECORD_TYPE_ID = 
+        LLC_BI__Loan__c.SObjectType.getDescribe().getRecordTypeInfosByName().get('SOR Record Type').getRecordTypeId();
+    private static final Id CAR_RECORD_TYPE_ID = 
+        LLC_BI__Loan__c.SObjectType.getDescribe().getRecordTypeInfosByName().get('CAR Record Type').getRecordTypeId();
+    private static final String CUSTOMER_ACCOUNT_STATUS = 'Customer';
+    private static final String LOAN_STATUS_OPEN = 'Open';
+}
