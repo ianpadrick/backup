@@ -1,29 +1,103 @@
-<apex:page id="loginPage" showHeader="false" title="{!$Label.site.site_login}">
-  <apex:composition template="{!$Site.Template}">
-    <apex:define name="body">  
-      <center>
-        <apex:panelGrid bgcolor="white" columns="1"> 
-          <br/>
-          <br/>
-          <apex:panelGrid width="758" cellpadding="0" cellspacing="0" bgcolor="white" columns="1" styleClass="topPanelContainer"> 
-            <br/>
-            <apex:outputPanel layout="block" styleClass="topPanel">
-              <apex:panelGrid width="758" cellpadding="0" cellspacing="0" bgcolor="white" columns="2"> 
-                <apex:image url="{!URLFOR($Resource.SiteSamples, 'img/clock.png')}"/>
-                <apex:panelGroup >
-                  <br/>
-                  <apex:outputText styleClass="title" value="{!$Label.site.login}"/>
-                  <br/>
-                  <c:SiteLogin id="siteLogin"/>
-                  <br/>
-                </apex:panelGroup>
-              </apex:panelGrid> 
-             </apex:outputPanel>
-            <c:SitePoweredBy />
-          </apex:panelGrid> 
-       </apex:panelGrid>
-      </center>
-      <br/>
-    </apex:define>
-  </apex:composition>
+<apex:page showHeader="false" controller="SiteLoginController"
+    standardStylesheets="false" sidebar="false">
+
+<head>
+<title>BANK NAME</title>
+    <script type='text/javascript'>
+        function noenter(ev)  {
+            if (window.event && window.event.keyCode == 13 || ev.which == 13) {
+                javascriptLogin();
+                   
+                return false;
+            } 
+
+            else {
+                return true;
+            }
+        }
+    </script>
+    <style type="text/css">
+        fieldset.login {
+            background: none repeat scroll 0 0 white;
+            border: 1px solid #AAAAAA;
+            border-radius: 5px 5px 5px 5px;
+            font-family: "Century Gothic","Lucida Grande",Arial,sans-serif;
+            margin: 35px 0 25px;
+            padding: 10px;
+        }
+
+        fieldset.login b {
+            font-size: 22px;
+            margin-left: 130px;
+        }
+ 
+        fieldset.login label {
+            clear: both;
+            color: #333333;
+            display: block;
+            font-size: 14px;
+            font-weight: bold;
+            padding-top: 10px;
+        }
+ 
+        fieldset.login input.text {
+            border: 1px solid #AAAAAA;
+            color: #5E5E5E;
+            float: left;
+            padding: 5px;
+            width: 320px;
+        }
+ 
+        .clear {
+            clear: both;
+        }
+ 
+        .content {
+            margin: 0 auto;
+            width: 419px;
+        }
+
+        .topPanel {
+            margin-left: 32px;
+        }
+
+        .image {
+            margin-top: 15px;
+            margin-bottom: 10px;                
+            margin-left: 55px;
+        }
+    </style>
+</head>
+<body>
+    <div class="content">
+        <div class="login">
+            <apex:form id="loginForm" forceSSL="true">
+                <apex:actionFunction name="javascriptLogin" action="{!login}" />
+                <fieldset class="login">
+                    <b>Partner Login</b>
+                    
+                    <apex:outputPanel layout="block" styleClass="topPanel">
+                        <apex:image url="{!URLFOR($Resource.BANK_LOGO)}" styleClass="image"/>
+                        <apex:pageMessages id="error" />
+                        <!-- Login fields -->
+                        <apex:outputLabel styleClass="label" value="{!$Label.site.username}" for="username" />
+                        <apex:inputText styleClass="text" id="username" value="{!username}" />
+                        <apex:outputLabel styleClass="label" value="{!$Label.site.password}" for="password" />
+                        <apex:inputSecret styleClass="text" id="password" value="{!password}" onkeypress="return noenter(event);" />
+                    
+                        <div class="clear" />
+                        <p>
+                            <apex:commandButton value="Login" styleClass="button"
+                                action="{!login}" id="submitbutton" /><br/><br/>
+                            <apex:outputLink value="{!$Page.ForgotPassword}">
+                                {!$Label.site.forgot_your_password_q}
+                            </apex:outputLink>
+                        </p>
+                    </apex:outputPanel>
+
+                </fieldset> 
+                </apex:form>
+            </div>
+        </div>
+    </body>
 </apex:page>
