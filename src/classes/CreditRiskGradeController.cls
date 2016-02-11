@@ -1,1130 +1,460 @@
 public class CreditRiskGradeController {
 
-    Boolean evidenceValue = false;
-    String dateFounded = null;
-    Decimal yearsInBusiness = 0;
-    String strScore = '0';
-    String ofac = '';
-    Decimal trade = 0;
-    Integer score = 0;
-    Decimal ficoScore = 0;
-    Decimal revDebtAvailable = 0;
-    Decimal revDebtBalance = 0;
-    Decimal revDebtAvailability = 0;
-    Integer ccsScore = 0;    
-    Integer paydexScore = 0;
-    String bankruptcies = '';
-    Decimal finalCreditScore = 0;
-    public Decimal creditscore {get; set;}
-    
+    /*******************
+      Public Variables
+    ********************/
+    public ApexPages.StandardController stdController;
+    public Id accId;
+    public String loanName;
+    public Id recTypeId;
+    public String recTypeName;
+    public Id recordId;
+    public Decimal overridePoints = 0;
+
+    /*******************
+        D&B Variables
+    ********************/
+    public Decimal trade = 0;
+    public Boolean evidenceValue = false;
+    public Decimal yearsInBusiness = 0;
+    public String dateFounded = '';
+    public Integer score = 0;
+    public Integer ccsPercent = 0;
+    public Integer paydexScore = 0;
 
     /*******************
         CBC Variables
     ********************/
+    public Decimal ficoScore = 0;
+    public String ofac = '';
+    public Integer scoreValue = 0;
+    public String bankruptcies = 'No';
+    public Decimal revDebtAvailability = 0;
 
-    String scoreValue = '';
-    Integer intScoreValue = 0;
-
-    //Get's the current Credit Risk Grade RecordType Id
-    Id recordId = ApexPages.currentPage().getParameters().get('id');
-
-    
-    ApexPages.StandardController stdController;
-    public Boolean refreshPage {get; set;}
-
-    //Constructor for standard controller
     public CreditRiskGradeController(ApexPages.StandardController controller) {
-      stdController = controller;
-      refreshPage=false;
+        stdController = controller;
+
+        Credit_Risk_Grade__c c = [SELECT 
+                Id, 
+                Relationship__c,
+                Loan_Name__c,
+                RecordTypeId,
+                RecordType.DeveloperName
+            FROM 
+                Credit_Risk_Grade__c 
+            WHERE 
+                Id =: ApexPages.currentPage().getParameters().get('id')];
+        
+        recordId = c.Id;
+        accId = c.Relationship__c;
+        loanName = c.Loan_Name__c;
+        recTypeId = c.RecordTypeId;
+        recTypeName = c.RecordType.DeveloperName;
     }
 
-    public PageReference SaveRecord() {
+    public PageReference queryDNBRecords() {
+        List<nBCR__Business_Credit_Report__c> credRepList = [SELECT
+                Id,
+                nBCR__Account__c,
+                nDNB__Trade_Experiences_Reported__c
+            FROM
+                nBCR__Business_Credit_Report__c
+            WHERE
+                nBCR__Account__c =: accId
+            ORDER BY
+                CreatedDate Desc LIMIT 1];
 
-      // Pull back the current Credit Risk Grade record
-      Credit_Risk_Grade__c credit = [
-        SELECT 
-          Id, 
-          Relationship__c,
-          Relationship__r.Average__c,
-          Relationship__r.Average_Loan_Balance__c,
-          Relationship__r.NSF_s_or_OD_s__c,
-          Relationship__r.Account_Type__c,
-          Loan_Name__c,
-          RecordTypeId
-        FROM 
-          Credit_Risk_Grade__c 
-        WHERE 
-          Id =: recordId];
-
-      System.debug('******** RecID' + credit.RecordTypeId);
-
-    /******************
-        D&B Queries 
-    *******************/
-
-      // Retrieve and set the Trade Experiences Reported field
-      List<nBCR__Business_Credit_Report__c> credRepList = [
-                SELECT
-                    Id,
-                    nDNB__Trade_Experiences_Reported__c,
-                    nDNB__Annual_Sales__c
-                FROM
-                    nBCR__Business_Credit_Report__c
-                WHERE
-                    nBCR__Account__c =: credit.Relationship__c
-                ORDER BY
-                    CreatedDate Desc limit 1];
-
-      for (nBCR__Business_Credit_Report__c b : credRepList) {
-          if (b.nDNB__Trade_Experiences_Reported__c > 0) {
-            trade = b.nDNB__Trade_Experiences_Reported__c;
-          } else {
-            trade = 0;
-          }
-
-        update credRepList;
-      }
-
-      // Retrieve and set the Evidence of Judgements, Liens, and Suits field
-      List<nBCR__Business_Credit_Report__c> bizReportList = [
-                SELECT
-                    Id,
-                    (
-                      SELECT
-                          Id,
-                          nDNB__Judgment_Count__c,
-                          nDNB__Lien_Count__c,
-                          nDNB__Suit_Found__c
-                      FROM 
-                          nDNB__Business_Judgments__r
-                      ORDER BY
-                          CreatedDate Desc limit 1
-                    )
-                FROM
-                    nBCR__Business_Credit_Report__c
-                WHERE
-                    nBCR__Account__c =: credit.Relationship__c
-                ORDER BY
-                    CreatedDate Desc limit 1];
-
-      for (nBCR__Business_Credit_Report__c bcr : bizReportList) {
-        for (nDNB__Business_Credit_Judgment__c judge : bcr.nDNB__Business_Judgments__r) {
-          if (judge.nDNB__Judgment_Count__c > 0 || judge.nDNB__Lien_Count__c > 0 || judge.nDNB__Suit_Found__c == True) {
-            evidenceValue = True;
-          } else {
-            evidenceValue = False;
-          }
+        Id bizReportId;
+        if (credRepList.size() > 0) {
+            bizReportId = credRepList[0].Id;
         }
 
-        update bizReportList;
-      }
-
-      // Retrieve and set the Time in Business and Date Established fields
-      List<nBCR__Business_Credit_Report__c> bizList = [
-                SELECT
-                    Id,
-                    (
-                      SELECT
-                          Id,
-                          nBCR__Years_In_Business__c,
-                          nBCR__Date_Founded__c,
-                          nBCR__Incorporation_Year__c
-                      FROM 
-                          nBCR__Business_Demographics__r
-                      ORDER BY
-                          CreatedDate Desc limit 1
-                    )
-                FROM
-                    nBCR__Business_Credit_Report__c
-                WHERE
-                    nBCR__Account__c =: credit.Relationship__c
-                ORDER BY
-                    CreatedDate Desc limit 1];
-
-      for (nBCR__Business_Credit_Report__c bizCred : bizList) {
-        for (nBCR__Business_Credit_Demographics__c j : bizCred.nBCR__Business_Demographics__r) {
-          if (j.nBCR__Years_In_Business__c > 0) {
-            yearsInBusiness = j.nBCR__Years_In_Business__c;
-          } else {
-            yearsInBusiness = 0;
-          }
-
-          if (j.nBCR__Date_Founded__c != null) {
-            dateFounded = String.valueOf(j.nBCR__Date_Founded__c);
-          } else if(j.nBCR__Incorporation_Year__c != null) {
-            dateFounded = j.nBCR__Incorporation_Year__c;
-          } else{
-            dateFounded = null;
-          }
+        for (nBCR__Business_Credit_Report__c b : credRepList) {
+            if (b.nDNB__Trade_Experiences_Reported__c > 0) {
+                trade = b.nDNB__Trade_Experiences_Reported__c;
+            }
         }
 
-        update bizList;
-      }
-
-        //Query for DnB Score Types and set score field
-        List<nBCR__Business_Credit_Score__c> bizCredList = [
-                SELECT 
-                    Id, 
-                    nBCR__Score__c, nBCR__Score_Rating__c, 
-                    nBCR__Score_Description__c, nBCR__Score_Code__c 
-                FROM 
-                    nBCR__Business_Credit_Score__c 
-                WHERE 
-                    nBCR__Business_Credit_Report__r.nBCR__Account__c =: credit.Relationship__c ];
-
-        for (nBCR__Business_Credit_Score__c biz : bizCredList) {
-           
-           if (biz.nBCR__Score_Description__c == 'Commercial Credit Score') {
-              score = Integer.valueOf(biz.nBCR__Score_Rating__c);
-           } else if (biz.nBCR__Score_Description__c == 'Commercial Credit Score Percentile') {
-              ccsScore = Integer.valueOf(biz.nBCR__Score_Rating__c);
-           } else if (biz.nBCR__Score_Description__c.containsIgnoreCase('Paydex')) {
-              paydexScore = Integer.valueOf(biz.nBCR__Score_Rating__c);
-           }
-
-
-        }
-        update bizCredList;
-
-    /******************
-        CBC Queries 
-    *******************/
-    //Checks to see if the Credit Scorecard is a Personal Guarantee or Medical Record Type.
-    if(credit.RecordTypeId == '012i0000001A33D' || credit.RecordTypeId == '012e00000000NeK'){
-
-      //Retrieve the Gaurantor entity involement record for Personal and medical Score cards
-      List<LLC_BI__Legal_Entities__c> entList = [
-                SELECT
-                    Id,
-                    LLC_BI__Account__c,
-                    LLC_BI__Borrower_Type__c,
-                    LLC_BI__Loan__c
-                FROM
-                    LLC_BI__Legal_Entities__c
-                WHERE
-                    LLC_BI__Borrower_Type__c = 'Guarantor' AND LLC_BI__Loan__c =: credit.Loan_Name__c
-      ];
-
-      //Create a set of the Entity Account Ids
-      Set<Id> entAcctId = new Set<Id>();
-
-      for(LLC_BI__Legal_Entities__c le : entList){
-      entAcctId.add(le.LLC_BI__Account__c);
-      }
-
-      // Retrieve and set the CBC Score field, CBC FICO Score Range, and OFAC
-      List<nCBC__Credit_Report__c> reportList = [
-                SELECT
-                    Id,
-                    nCBC__FICO_Score__c,
-                    nCBC__OFAC__c,
-                    nCBC__Contact__r.AccountId,
-                    (
-                      SELECT
-                          Id,
-                          nCBC__scoreValue__c,
-                          nCBC__modelName__c
-                      FROM 
-                          nCBC__Credit_Records1__r
-                      WHERE
-                         nCBC__scoreValue__c != null
-                      AND
-                        nCBC__modelName__c LIKE 'Experian%'
-                    )
-                FROM
-                    nCBC__Credit_Report__c
-                WHERE
-                    nCBC__Contact__r.AccountId IN :entAcctId
-                AND
-                    nCBC__Contact__r.LLC_BI__Primary_Contact__c = true 
-                ORDER BY
-                    nCBC__FICO_Score__c Desc limit 1];
-
-      //Loops through Credit Reports and sets the fico score field and OFAC field.
-      for (nCBC__Credit_Report__c cred : reportList) {
-          if(cred.nCBC__FICO_Score__c != 0){
-            ficoscore = cred.nCBC__FICO_Score__c;
-          }else{
-            ficoscore = 0;
-          }
-          if(cred.nCBC__OFAC__c != ''){
-            ofac = cred.nCBC__OFAC__C;
-          }else{
-            ofac = '';
-          }
-
-      //Loops through the credit records and assigns the Experian Fico Score.  
-        for (nCBC__Credit_Record__c rec : cred.nCBC__Credit_Records1__r) {
-          if (rec.nCBC__scoreValue__c != null) {
-            scoreValue = rec.nCBC__scoreValue__c;
-            Integer scoreValueINTEGER = Integer.ValueOf(scoreValue);
-            intScoreValue = scoreValueINTEGER;
-          } else {
-            scoreValue = '0';
-            Integer scoreValueINTEGER = Integer.ValueOf(scoreValue);
-            intScoreValue = scoreValueINTEGER;
-          }
-
-        update reportList;
-        }
-      }
-
-      //Summations of Delinquincy types
-      Integer counter1 = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                          nCBC__delinqOver30Days__c != null];
-
-      if (counter1 == null) {
-        counter1 = 0;
-      }
-
-      Integer counter2 = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                          nCBC__delinqOver60Days__c != null];
-
-      if (counter2 == null) {
-        counter2 = 0;
-      }
-
-      Integer counter3 = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                          nCBC__delinqOver90Days__c != null];
-
-      if (counter3 == null) {
-        counter3 = 0;
-      }
-
-      //Summation of Chargeoffs
-      Integer chargeOffs = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                          nCBC__status__c = 'Collections'];
-
-      if (chargeOffs == null) {
-        chargeOffs = 0;
-      }
-
-      //Summation of Mortgages
-      Integer ownsHome = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                         nCBC__creditType__c = 'Mortgage'];
-
-      if (ownsHome == null) {
-        ownsHome = 0;
-      }
-
-      Integer bankruptcy = [ 
-                      SELECT
-                          COUNT()
-                      FROM 
-                          nCBC__Credit_Record__c
-                      WHERE
-                          nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                      AND
-                          nCBC__RecordType__c LIKE 'Bankruptcy%'];
-
-      if(bankruptcy >= 1){
-        bankruptcies = 'Yes';
-      }else{
-        bankruptcies = 'No';
-        bankruptcy = 0;
-      }
-
-      //Summations of Debt Available and Balances
-      Decimal debtAvailable = (Decimal) [
-                                  SELECT 
-                                      SUM(nCBC__creditLimit__c)total FROM nCBC__Credit_Record__c 
-                                  WHERE 
-                                      nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                                  AND 
-                                      (nCBC__creditType__c = 'Revolving' AND nCBC__status__c = 'Open')][0].get('total');
-
-      Decimal debtBalance = (Decimal) [
-                                  SELECT 
-                                      SUM(nCBC__balance__c)total FROM nCBC__Credit_Record__c 
-                                  WHERE 
-                                      nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: reportList[0].nCBC__Contact__r.AccountId
-                                  AND 
-                                      (nCBC__creditType__c = 'Revolving' AND nCBC__status__c = 'Open')][0].get('total');
-
-      //Calculate Revolving Debt Availability Percentage
-      if(debtBalance != null){
-        Decimal revDebtAvailability = debtBalance/debtAvailable;
-      }else{
-        Decimal revDebtAvailability = 0;
-      }
-      Credit_Risk_Grade__c c = (Credit_Risk_Grade__c)stdController.getRecord();
-
-      c.Slow_Pays__c = counter1 + counter2 + counter3;
-      c.Charge_Offs__c = chargeOffs;
-      c.Owns_Home_Property__c = ownsHome;
-      c.Bankruptcy__c = bankruptcy;
-      c.Bankruptcies__c = bankruptcies;
-      c.Revolving_Debt_Balance__c = debtBalance;
-      }//End IF
-
-      // Get the current Credit Risk Grade record
-      Credit_Risk_Grade__c c = (Credit_Risk_Grade__c)stdController.getRecord();
-
-      Map<String, Schema.RecordTypeInfo> creditGradeTypeInfo = Schema.Credit_Risk_Grade__c.SObjectType.getDescribe().getRecordTypeInfosByName();
-      
-      Decimal busCS = 0, perCS = 0, tcCS = 0, bankCS = 0, finCS = 0;
-
-      c.Evidence_of_Suits_Judgements_Liens__c = evidenceValue;
-      c.Date_Established2__c = dateFounded;
-      c.Time_in_business__c = yearsInBusiness * 12;
-      c.D_B_Score__c = score;
-      c.Number_of_Trade_Experiences_PG__c = trade;
-      c.FICO_Score_PG__c = ficoScore;
-      c.OFAC_Status__c = ofac;
-      c.FICO_Score_Range__c = intScoreValue;
-      c.D_B_CCS_Score__c = ccsScore;
-      c.Paydex_D_B_Score__c = paydexScore;
-      c.Debt_Availability__c = revDebtAvailability * 100;
-      c.Final_Risk_Grade__c = 0;
-
-      
-      // Personal Guarantee Record Type
-      if (c.RecordTypeId == creditGradeTypeInfo.get('Personal Guarantee').getRecordTypeId()) {
-
-        /******************
-          BUSINESS SECTION
-        ********************/
-
-        // Time in Business
-        if (c.Time_in_business__c < 23) {
-          busCS += 0;
-          c.Time_in_Business_Pts__c = 0;
-        }
-        else if (c.Time_in_business__c >= 23 && c.Time_in_business__c < 36) {
-          busCS += 2;
-          c.Time_in_Business_Pts__c = 2;
-        }
-        else if (c.Time_in_business__c >= 36 && c.Time_in_business__c < 60) {
-          busCS += 5;
-          c.Time_in_Business_Pts__c = 5;
-        }
-        else if (c.Time_in_business__c >= 60) {
-          busCS += 10;
-          c.Time_in_Business_Pts__c = 10;
+        List<nDNB__Business_Credit_Judgment__c> judgeList = [SELECT
+                Id,
+                nDNB__Judgment_Count__c,
+                nDNB__Lien_Count__c,
+                nDNB__Suit_Found__c
+            FROM 
+                nDNB__Business_Credit_Judgment__c
+            WHERE
+                nDNB__Business_Credit_Report__c =: bizReportId
+            AND
+                nDNB__Business_Credit_Report__r.nBCR__Account__c =: accId
+            ORDER BY
+                CreatedDate Desc limit 1];
+        for (nDNB__Business_Credit_Judgment__c j : judgeList) {
+            if (j.nDNB__Judgment_Count__c > 0 || j.nDNB__Lien_Count__c > 0 || j.nDNB__Suit_Found__c == true) {
+                evidenceValue = true;
+            }
         }
 
-        // Paydex score
-        if (c.Paydex_D_B_Score__c < 67) {
-          busCS += 0;
-          c.Paydex_D_B_Score_Pts__c = 0;
-        }
-        else if (c.Paydex_D_B_Score__c >= 67 && c.Paydex_D_B_Score__c < 75) {
-          busCS += 10;
-          c.Paydex_D_B_Score_Pts__c = 10;
-        }
-        else if (c.Paydex_D_B_Score__c >= 75) {
-          busCS += 20;
-          c.Paydex_D_B_Score_Pts__c = 20;
+        List<nBCR__Business_Credit_Demographics__c> demoList = [SELECT
+                Id,
+                nBCR__Years_In_Business__c,
+                nBCR__Date_Founded__c,
+                nBCR__Incorporation_Year__c
+            FROM 
+                nBCR__Business_Credit_Demographics__c
+            WHERE
+                nBCR__Business_Credit_Report__c =: bizReportId
+            AND
+                nBCR__Business_Credit_Report__r.nBCR__Account__c =: accId
+            ORDER BY
+                CreatedDate Desc limit 1];
+        for (nBCR__Business_Credit_Demographics__c d : demoList) {
+            if (d.nBCR__Years_In_Business__c > 0) {
+                yearsInBusiness = d.nBCR__Years_In_Business__c;
+            }
+
+            if (d.nBCR__Date_Founded__c != null) {
+                dateFounded = String.valueOf(d.nBCR__Date_Founded__c);
+            } else if (d.nBCR__Incorporation_Year__c != null) {
+                dateFounded = d.nBCR__Incorporation_Year__c;
+            }
         }
 
-        // Number of Trade Experiences
-        if (c.Number_of_Trade_Experiences_PG__c >= 5 && c.Number_of_Trade_Experiences_PG__c < 999) {
-          busCS +=3;
-          c.of_Trade_Experiences_Pts__c = 3;
-        }
-        else if (c.Number_of_Trade_Experiences_PG__c >= 1000) {
-          busCS += 15;
-          c.of_Trade_Experiences_Pts__c = 15;
-        }
-
-        // DnB Score
-        if (c.D_B_Score__c >= 400 && c.D_B_Score__c < 475) {
-          busCS += 2;
-          c.D_B_Score_Pts__c = 2;
-        }
-        else if (c.D_B_Score__c >= 475 && c.D_B_Score__c < 525) {
-          busCS += 10;
-          c.D_B_Score_Pts__c = 10;
-        }
-        else if (c.D_B_Score__c >= 525) {
-          busCS += 20;
-          c.D_B_Score_Pts__c = 20;
-        }
-
-        /******************
-          PERSONAL SECTION
-        ********************/
-
-        // FICO Score
-        if (c.FICO_Score_Range__c >= 640 && c.FICO_Score_Range__c < 680) {
-          perCS += 10;
-          c.FICO_Score_Range_Pts__c = 10;
-        }
-        if(c.FICO_Score_Range__c >= 680 && c.FICO_Score_Range__c < 726) {
-          perCS += 30;
-          c.FICO_Score_Range_Pts__c = 30;
-        }
-        if(c.FICO_Score_Range__c >= 726) {
-          perCS += 40;
-          c.FICO_Score_Range_Pts__c = 40;
+        List<nBCR__Business_Credit_Score__c> scoreList = [SELECT
+                Id,
+                nBCR__Score__c,
+                nBCR__Score_Rating__c,
+                nBCR__Score_Description__c,
+                nBCR__Score_Code__c
+            FROM 
+                nBCR__Business_Credit_Score__c
+            WHERE
+                nBCR__Business_Credit_Report__c =: bizReportId
+            AND
+                nBCR__Business_Credit_Report__r.nBCR__Account__c =: accId
+            ORDER BY
+                CreatedDate Desc limit 1];
+        for (nBCR__Business_Credit_Score__c s : scoreList) {
+            if (s.nBCR__Score_Description__c == 'Commercial Credit Score') {
+                score = Integer.ValueOf(s.nBCR__Score_Rating__c);
+            } else if (s.nBCR__Score_Description__c == 'Commercial Credit Score Percentile') {
+                ccsPercent = Integer.ValueOf(s.nBCR__Score_Rating__c);
+            } else if (s.nBCR__Score_Description__c.containsIgnoreCase('Paydex')) {
+                paydexScore = Integer.ValueOf(s.nBCR__Score_Rating__c);
+            }
         }
 
-        // Revolving debt available
-        if (c.Debt_Availability__c >= 30 && c.Debt_Availability__c <= 60) {
-          perCS += 2;
-          c.Revolving_Debt_Available_Pts__c = 2;
-        }
-        else if (c.Debt_Availability__c >= 61 && c.Debt_Availability__c <= 99) {
-          perCS += 7;
-          c.Revolving_Debt_Available_Pts__c = 7;
-        }
-        else if (c.Debt_Availability__c == 100) {
-          perCS += 10;
-          c.Revolving_Debt_Available_Pts__c = 10;
-        }
-
-        // Owns home property
-        if (c.Owns_Home_Property__c < 1) {
-          perCS += 0;
-          c.Owns_Home_Property_Pts__c = 0;
-        }
-        else if (c.Owns_Home_Property__c >=1 && c.Owns_Home_Property__c < 5) {
-          perCS += 1;
-          c.Owns_Home_Property_Pts__c = 1;
-        }
-        else if (c.Owns_Home_Property__c > 5) {
-          perCS += 2;
-          c.Owns_Home_Property_Pts__c = 2;
-        }
-
-        // Slow pays 
-        if (c.Slow_Pays__c >= 2) {
-          perCS += 0;
-          c.Slow_Pays_Pts__c = 0;
-        }
-        else if (c.Slow_Pays__c == 1) {
-          perCS += 5;
-          c.Slow_Pays_Pts__c = 5;
-        }
-        else if (c.Slow_Pays__c == 0) {
-          perCS += 6;
-          c.Slow_Pays_Pts__c = 6;
-        }
-
-        // Charge offs
-        if (c.Charge_Offs__c == 0) {
-          perCS += 4;
-          c.Charge_Offs_Pts__c = 4;
-        }
-        else if (c.Charge_Offs__c == 1) {
-          perCS += 2;
-          c.Charge_Offs_Pts__c = 2;
-        }
-        else if (c.Charge_Offs__c >= 2) {
-          perCS += 0;
-          c.Charge_Offs_Pts__c = 0;
-        }
-
-        // Bankruptcy
-        if (c.Bankruptcy__c == 0) {
-          perCS += 5;
-          c.Bankruptcy_Pts__c = 5;
-        }
-        else if (c.Bankruptcy__c >= 1 && c.Bankruptcy__c < 5) {
-          perCS +=3;
-          c.Bankruptcy_Pts__c = 3;
-        }
-        else if (c.Bankruptcy__c>=5) {
-          perCS +=0;
-          c.Bankruptcy_Pts__c = 0;
-        }
-
-        /*********************
-          COLLATERAL SECTION
-        **********************/
-
-        // New or Used Collateral
-        if (c.New_Used__c == 'Used')
-          tcCS += 0;
-        else if (c.New_Used__c == 'New')
-          tcCS += 2;
-
-        // Useful Life
-        if (c.Useful_Life__c == '1-4 Years')
-          tcCS += 0;
-        else if (c.Useful_Life__c == '5-7 Years')
-          tcCS += 1;
-        else if (c.Useful_Life__c == '7+ Years')
-          tcCS += 2;
-
-        // Revenue Generating Essential
-        if (c.Revenue_Generating_Essential_Use__c == 'Y - IM')
-          tcCS += 2;
-        else if (c.Revenue_Generating_Essential_Use__c == 'Y - CR')
-          tcCS += 3;
-        else if (c.Revenue_Generating_Essential_Use__c == 'No')
-          tcCS += 0;
-
-        // Down Payment
-        if (c.Down_Payment__c < 10)
-          tcCS += 0;
-        else if (c.Down_Payment__c >= 10 && c.Down_Payment__c < 15)
-          tcCS += 2;
-        else if (c.Down_Payment__c >= 15)
-          tcCS += 3;
-
-        // Other Collateral
-        if (c.Other_Collateral__c == 'None')
-          tcCS += 0;
-        else if (c.Other_Collateral__c == 'Blanket')
-          tcCS += 2;
-        else if (c.Other_Collateral__c == 'Real') 
-          tcCS += 7; 
-
-        /*************************
-          BANK REFERENCE SECTION
-        **************************/
-
-        // Account Type
-        if (credit.Relationship__r.Account_Type__c == 'Loan')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Deposit')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Both')
-          bankCS += 2;
-
-        // Average Deposit Balance
-        if (credit.Relationship__r.Average__c == 'Low 4 - Mod 4')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average__c == 'High 4 - Mod 5')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average__c == 'High 5+')
-          bankCS += 2;
-
-        // Average Loan Balance
-        if (credit.Relationship__r.Average_Loan_Balance__c == '0 - Low 5')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Low 5 - Low 6')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Mod 6+')
-          bankCS += 2;
-
-        // NSF's or OD's
-        if (credit.Relationship__r.NSF_s_or_OD_s__c == '0')
-          bankCS += 2;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '1-2')
-          bankCS += 0;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '3-5')
-          bankCS -= 5;
-
-        //Calculate Overall Score and set variables
-        creditScore = busCS+perCS+tcCS+bankCS;
-        c.Business_Score__c = busCS;
-        c.Personal_Score__c = perCS;
-        c.Total_Collateral_Score__c = tcCS;
-        c.Bank_Score__c = bankCS;
-
-        c.Overall_Credit_Score__c = creditScore;
+        Credit_Risk_Grade__c c = (Credit_Risk_Grade__c)stdController.getRecord();
+        c.Number_of_Trade_Experiences_PG__c = trade;
+        c.Evidence_of_Suits_Judgements_Liens__c = evidenceValue;
+        c.Time_in_business__c = yearsInBusiness * 12;
+        c.Date_Established2__c = dateFounded;
+        c.D_B_Score__c = score;
+        c.D_B_CCS_Score__c = ccsPercent;
+        c.Paydex_D_B_Score__c = paydexScore;
         
-        if(c.Override_Points__c == NULL){
-          c.Override_Points__c = 0;
+        update c;
+
+        if (recTypeName == RT_PERSONAL || recTypeName == RT_PERSONAL_ADMIN || recTypeName == RT_MEDICAL || recTypeName == RT_MEDICAL_ADMIN) {
+            return queryCBCRecords();
+        } else {
+            return save();
         }
-
-        finalCreditScore = creditScore + c.Override_Points__c;
-        
-        c.Final_Credit_Score__c = finalCreditScore;
-
-        if (c.Final_Credit_Score__c <= 59)
-          c.Final_Risk_Grade__c = 7;
-        else if (c.Final_Credit_Score__c >= 60 && c.Final_Credit_Score__c <= 79)
-          c.Final_Risk_Grade__c = 6;
-        else if (c.Final_Credit_Score__c >= 80 && c.Final_Credit_Score__c <= 94)
-          c.Final_Risk_Grade__c = 5;
-        else if (c.Final_Credit_Score__c >= 95 && c.Final_Credit_Score__c <= 124)
-          c.Final_Risk_Grade__c = 4;
-        else if (c.Final_Credit_Score__c >= 125)
-          c.Final_Risk_Grade__c = 3;
-
-        // Medical Record Type
-      } else if (c.RecordTypeId == creditGradeTypeInfo.get('Medical').getRecordTypeId()) {
-
-        /******************
-          BUSINESS SECTION
-        ********************/
-
-        // Years Licensed
-        if (c.Years_Licensed__c < 3){
-          busCS += 13;
-          c.Years_Licensed_Pts__c = 13;
-        }
-        else if (c.Years_Licensed__c >= 3 && c.Years_Licensed__c <= 4) {
-          busCS += 22;
-          c.Years_Licensed_Pts__c = 22;
-        }
-        else if (c.Years_Licensed__c > 4) {
-          busCS += 32;
-          c.Years_Licensed_Pts__c = 32;
-        }
-
-        //Practice Type
-        if (c.Practice_Type__c == 'Chiro'){
-          busCS += 7;
-          c.Practice_Type_Pts__c = 7;
-        }
-        else if (c.Practice_Type__c == 'MD') {
-          busCS += 10;
-          c.Practice_Type_Pts__c = 10;
-        }
-        else if (c.Practice_Type__c =='Spec') {
-          busCS += 15;
-          c.Practice_Type_Pts__c = 15;
-        }
-
-        // Paydex score
-        if (c.Paydex_D_B_Score__c < 67) {
-          busCS += 0;
-          c.Paydex_D_B_Score_Pts__c = 0;
-        }
-        else if (c.Paydex_D_B_Score__c >= 67 && c.Paydex_D_B_Score__c < 75) {
-          busCS += 10;
-          c.Paydex_D_B_Score_Pts__c = 10;
-        }
-        else if (c.Paydex_D_B_Score__c >= 75) {
-          busCS += 20;
-          c.Paydex_D_B_Score_Pts__c = 20;
-        }
-
-      
-        /******************
-          PERSONAL SECTION
-        ********************/
-
-        // FICO Score
-        if (c.FICO_Score_Range__c >= 640 && c.FICO_Score_Range__c < 680) {
-          perCS += 10;
-          c.FICO_Score_Range_Pts__c = 10;
-        }
-        if(c.FICO_Score_Range__c >= 680 && c.FICO_Score_Range__c < 726) {
-          perCS += 30;
-          c.FICO_Score_Range_Pts__c = 30;
-        }
-        if(c.FICO_Score_Range__c >= 726) {
-          perCS += 40;
-          c.FICO_Score_Range_Pts__c = 40;
-        }
-
-        // Revolving debt available
-        if (c.Debt_Availability__c >= 30 && c.Debt_Availability__c <= 60) {
-          perCS += 2;
-          c.Revolving_Debt_Available_Pts__c = 2;
-        }
-        else if (c.Debt_Availability__c >= 61 && c.Debt_Availability__c <= 99) {
-          perCS += 7;
-          c.Revolving_Debt_Available_Pts__c = 7;
-        }
-        else if(c.Debt_Availability__c == 100){
-          perCS += 10;
-          c.Revolving_Debt_Available_Pts__c = 10;
-        }
-
-        // Owns home property
-        if (c.Owns_Home_Property__c < 1) {
-          perCS += 0;
-          c.Owns_Home_Property_Pts__c = 0;
-        }
-        else if (c.Owns_Home_Property__c >=1 && c.Owns_Home_Property__c < 5) {
-          perCS += 1;
-          c.Owns_Home_Property_Pts__c = 1;
-        }
-        else if (c.Owns_Home_Property__c > 5) {
-          perCS += 2;
-          c.Owns_Home_Property_Pts__c = 2;
-        }
-
-        // Slow pays 
-        if (c.Slow_Pays__c >= 2) {
-          perCS += 0;
-          c.Slow_Pays_Pts__c = 0;
-        }
-        else if (c.Slow_Pays__c == 1) {
-          perCS += 5;
-          c.Slow_Pays_Pts__c = 5;
-        }
-        else if (c.Slow_Pays__c == 0) {
-          perCS += 6;
-          c.Slow_Pays_Pts__c = 6;
-        }
-
-        // Charge offs
-        if (c.Charge_Offs__c == 0) {
-          perCS += 4;
-          c.Charge_Offs_Pts__c = 4;
-        }
-        else if (c.Charge_Offs__c == 1) {
-          perCS += 2;
-          c.Charge_Offs_Pts__c = 2;
-        }
-        else if (c.Charge_Offs__c >= 2) {
-          perCS += 0;
-          c.Charge_Offs_Pts__c = 0;
-        }
-
-        // Bankruptcy
-        if (c.Bankruptcy__c == 0) {
-          perCS += 5;
-          c.Bankruptcy_Pts__c = 5;
-        }
-        else if (c.Bankruptcy__c >= 1 && c.Bankruptcy__c < 5) {
-          perCS +=3;
-          c.Bankruptcy_Pts__c = 3;
-        }
-        else if (c.Bankruptcy__c>=5) {
-          perCS +=0;
-          c.Bankruptcy_Pts__c = 0;
-        }
-
-        /*********************
-          COLLATERAL SECTION
-        **********************/
-
-        // New/Used Collateral
-        if (c.New_Used__c == 'Used')
-          tcCS += 0;
-        else if (c.New_Used__c == 'New')
-          tcCS += 2;
-
-        // Useful Life
-        if (c.Useful_Life__c == '1-4 Years')
-          tcCS += 0;
-        else if (c.Useful_Life__c == '5-7 Years')
-          tcCS += 1;
-        else if (c.Useful_Life__c == '7+ Years')
-          tcCS += 2;
-
-        // Revenuve Generating Essential
-        if (c.Revenue_Generating_Essential_Use__c == 'Y - IM')
-          tcCS += 2;
-        else if (c.Revenue_Generating_Essential_Use__c == 'Y - CR')
-          tcCS += 3;
-        else if (c.Revenue_Generating_Essential_Use__c == 'No')
-          tcCS += 0;
-
-        // Down Payment
-        if (c.Down_Payment__c < 10)
-          tcCS += 0;
-        else if (c.Down_Payment__c >= 10 && c.Down_Payment__c < 15)
-          tcCS += 2;
-        else if (c.Down_Payment__c >= 15)
-          tcCS += 3;
-
-        // Other Collateral
-        if (c.Other_Collateral__c == 'None')
-          tcCS += 0;
-        else if (c.Other_Collateral__c == 'Blanket')
-          tcCS += 2;
-        else if (c.Other_Collateral__c == 'Real') 
-          tcCS += 7; 
-
-        /*************************
-          BANK REFERENCE SECTION
-        **************************/
-
-        // Account Type
-        if (credit.Relationship__r.Account_Type__c == 'Loan')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Deposit')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Both')
-          bankCS += 2;
-
-        // Average Deposit Balance
-        if (credit.Relationship__r.Average__c == 'Low 4 - Mod 4')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average__c == 'High 4 - Mod 5')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average__c == 'High 5+')
-          bankCS += 2;
-
-        // Average Loan Balance
-        if (credit.Relationship__r.Average_Loan_Balance__c == '0 - Low 5')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Low 5 - Low 6')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Mod 6+')
-          bankCS += 2;
-
-        // NSF's or OD's
-        if (credit.Relationship__r.NSF_s_or_OD_s__c == '0')
-          bankCS += 2;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '1-2')
-          bankCS += 0;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '3-5')
-          bankCS -= 5;
-
-        //Calculate Overall Score and set variables
-        creditScore = busCS+perCS+tcCS+bankCS;
-        c.Business_Score__c = busCS;
-        c.Personal_Score__c = perCS;
-        c.Total_Collateral_Score__c = tcCS;
-        c.Bank_Score__c = bankCS;
-
-        c.Overall_Credit_Score__c = creditScore;
-
-        if(c.Override_Points__c == NULL){
-          c.Override_Points__c = 0;
-        }
-        
-        finalCreditScore = creditScore + c.Override_Points__c;
-        
-        c.Final_Credit_Score__c = finalCreditScore;
-
-        if (c.Final_Credit_Score__c <= 59)
-          c.Final_Risk_Grade__c = 7;
-        else if (c.Final_Credit_Score__c >= 60 && c.Final_Credit_Score__c <= 79)
-          c.Final_Risk_Grade__c = 6;
-        else if (c.Final_Credit_Score__c >= 80 && c.Final_Credit_Score__c <= 94)
-          c.Final_Risk_Grade__c = 5;
-        else if (c.Final_Credit_Score__c >= 95 && c.Final_Credit_Score__c <= 124)
-          c.Final_Risk_Grade__c = 4;
-        else if (c.Final_Credit_Score__c >= 125)
-          c.Final_Risk_Grade__c = 3;
-
-
-        // Corporate Record Type
-      } else if (c.RecordTypeId == creditGradeTypeInfo.get('Corporate').getRecordTypeId()) {
-        
-        /******************
-          BUSINESS SECTION
-        ********************/
-
-        // Time in Business
-        if (c.Time_in_business__c < 23) {
-          busCS += 0;
-          c.Time_in_Business_Pts__c =  0;
-        }
-        else if (c.Time_in_business__c >= 23 && c.Time_in_business__c < 36)  {
-          busCS += 2;
-          c.Time_in_Business_Pts__c =  2;
-        }
-        else if (c.Time_in_business__c >= 36 && c.Time_in_business__c < 83)  {
-          busCS += 15;
-          c.Time_in_Business_Pts__c = 15;
-        }
-        else if (c.Time_in_business__c >= 83)  {
-          busCS += 30;
-          c.Time_in_Business_Pts__c = 30;
-        }
-
-        // Paydex score
-        if (c.Paydex_D_B_Score__c < 67) {
-          busCS += 0;
-          c.Paydex_D_B_Score_Pts__c = 0;
-        }
-        else if (c.Paydex_D_B_Score__c >= 67 && c.Paydex_D_B_Score__c < 75) {
-          busCS += 10;
-          c.Paydex_D_B_Score_Pts__c = 10;
-        }
-        else if (c.Paydex_D_B_Score__c >= 75) {
-          busCS += 20;
-          c.Paydex_D_B_Score_Pts__c = 20;
-        }
-
-        // Number of Trade Experiences
-        if (c.Number_of_Trade_Experiences_PG__c >= 5 && c.Number_of_Trade_Experiences_PG__c < 999) {
-          busCS +=5;
-          c.of_Trade_Experiences_Pts__c = 5;
-        }
-        else if (c.Number_of_Trade_Experiences_PG__c >= 1000) {
-          busCS += 10;
-          c.of_Trade_Experiences_Pts__c = 10;
-        }
-
-        // DnB Score
-        if (c.D_B_Score__c >= 400 && c.D_B_Score__c < 475) {
-          busCS += 5;
-          c.D_B_Score_Pts__c =  5;
-        }
-        else if (c.D_B_Score__c >= 475 && c.D_B_Score__c < 525) {
-          busCS += 15;
-          c.D_B_Score_Pts__c = 15;
-        }
-        else if (c.D_B_Score__c >= 525) {
-          busCS += 25;
-          c.D_B_Score_Pts__c = 25;
-        }
-      
-        /**************************
-          FINANCIAL SCORE SECTION
-        ***************************/
-
-        // Net Income
-        if (c.Net_Income__c == 'Loss')  {
-          finCS -= 20;
-          c.Net_Income_Pts__c = 20;
-        }
-        else if (c.Net_Income__c == 'Profit') {
-          finCS += 5;
-          c.Net_Income_Pts__c =  5;
-        }
-        else if (c.Net_Income__c == 'Profit3') {
-          finCS += 10;
-          c.Net_Income_Pts__c = 10;
-        }
-
-        // Annual Sales Volume
-        if (c.Annual_Sales_Volume_CP__c == 'Less than $3mm') {
-          finCS += 2;
-          c.Annual_Sales_Volume_Pts__c =  2;
-        }
-        else if (c.Annual_Sales_Volume_CP__c == '$3mm to $7mm') {
-          finCS += 5;
-          c.Annual_Sales_Volume_Pts__c =  5;
-        }
-        else if (c.Annual_Sales_Volume_CP__c == '$7mm+') {
-          finCS += 10;
-          c.Annual_Sales_Volume_Pts__c = 10;
-        }
-
-        /*********************
-          COLLATERAL SECTION
-        **********************/
-
-        // New/Used Collateral
-        if (c.New_Used__c == 'Used')
-          tcCS += 0;
-        else if (c.New_Used__c == 'New')
-          tcCS += 2;
-
-        // Useful Life
-        if (c.Useful_Life__c == '1-4 Years')
-          tcCS += 0;
-        else if (c.Useful_Life__c == '5-7 Years')
-          tcCS += 1;
-        else if (c.Useful_Life__c == '7+ Years')
-          tcCS += 2;
-
-        // Revenue Generating Essential
-        if (c.Revenue_Generating_Essential_Use__c == 'Y - IM')
-          tcCS += 2;
-        else if (c.Revenue_Generating_Essential_Use__c == 'Y - CR')
-          tcCS += 3;
-        else if (c.Revenue_Generating_Essential_Use__c == 'No')
-          tcCS += 0;
-
-        // Down Payment
-        if (c.Down_Payment__c < 10)
-          tcCS += 0;
-        else if (c.Down_Payment__c >= 10 && c.Down_Payment__c < 15)
-          tcCS += 2;
-        else if (c.Down_Payment__c >= 15)
-          tcCS += 3;
-
-        // Other Collateral
-        if (c.Other_Collateral__c == 'None')
-          tcCS += 0;
-        else if (c.Other_Collateral__c == 'Blanket')
-          tcCS += 2;
-        else if (c.Other_Collateral__c == 'Real') 
-          tcCS += 7; 
-
-        /*************************
-          BANK REFERENCE SECTION
-        **************************/
-
-        // Account Type
-        if (credit.Relationship__r.Account_Type__c == 'Loan')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Deposit')
-          bankCS += 1;
-        else if (credit.Relationship__r.Account_Type__c == 'Both')
-          bankCS += 2;
-
-        // Average Deposit Balance
-        if (credit.Relationship__r.Average__c == 'Low 4 - Mod 4')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average__c == 'High 4 - Mod 5')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average__c == 'High 5+')
-          bankCS += 2;
-
-        // Average Loan Balance
-        if (credit.Relationship__r.Average_Loan_Balance__c == '0 - Low 5')
-          bankCS += 0;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Low 5 - Low 6')
-          bankCS += 1;
-        else if (credit.Relationship__r.Average_Loan_Balance__c == 'Mod 6+')
-          bankCS += 2;
-
-        // NSF's or OD's
-        if (credit.Relationship__r.NSF_s_or_OD_s__c == '0')
-          bankCS += 2;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '1-2')
-          bankCS += 0;
-        else if (credit.Relationship__r.NSF_s_or_OD_s__c == '3-5')
-          bankCS -= 5;
-
-        //Calculate Overall Score and set variables
-        creditScore = busCS+finCS+tcCS+bankCS;
-        c.Business_Score__c = busCS;
-        c.Financial_Score__c = finCS;
-        c.Total_Collateral_Score__c = tcCS;
-        c.Bank_Score__c = bankCS;
-
-        c.Overall_Credit_Score__c = creditScore;
-
-        if(c.Override_Points__c == NULL){
-          c.Override_Points__c = 0;
-        }
-        
-        finalCreditScore = creditScore + c.Override_Points__c;
-        
-        c.Final_Credit_Score__c = finalCreditScore;
-
-        if (c.Final_Credit_Score__c <= 59)
-          c.Final_Risk_Grade__c = 7;
-        else if (c.Final_Credit_Score__c >= 60 && c.Final_Credit_Score__c <= 79)
-          c.Final_Risk_Grade__c = 6;
-        else if (c.Final_Credit_Score__c >= 80 && c.Final_Credit_Score__c <= 94)
-          c.Final_Risk_Grade__c = 5;
-        else if (c.Final_Credit_Score__c >= 95 && c.Final_Credit_Score__c <= 124)
-          c.Final_Risk_Grade__c = 4;
-        else if (c.Final_Credit_Score__c >= 125)
-          c.Final_Risk_Grade__c = 3;
-
-      }
-
-      update credit;
-
-      // calling standard save() method
-      stdController.save();
-      // return 'null' to stay on same page
-      PageReference pageRef = new PageReference('/' + recordId);
-
-      return pageRef;
     }
+
+    public PageReference queryCBCRecords() {
+        
+        Set<Id> entAccIds = new Set<Id>();
+        List<LLC_BI__Legal_Entities__c> entList = [SELECT
+                Id,
+                LLC_BI__Account__c,
+                LLC_BI__Borrower_Type__c,
+                LLC_BI__Loan__c
+            FROM
+                LLC_BI__Legal_Entities__c
+            WHERE
+                LLC_BI__Borrower_Type__c =: GUARANTOR
+            AND
+                LLC_BI__Loan__c =: loanName];
+        for (LLC_BI__Legal_Entities__c e : entList) {
+            entAccIds.add(e.LLC_BI__Account__c);
+        }
+
+        List<nCBC__Credit_Report__c> reportList = [SELECT
+                Id,
+                nCBC__FICO_Score__c,
+                nCBC__OFAC__c,
+                nCBC__Contact__r.AccountId
+            FROM
+                nCBC__Credit_Report__c
+            WHERE
+                nCBC__Contact__r.AccountId IN: entAccIds
+            AND
+                nCBC__Contact__r.LLC_BI__Primary_Contact__c = true 
+            ORDER BY
+                nCBC__FICO_Score__c DESC LIMIT 1];        
+        Id credReportId = reportList[0].Id;
+        Id credReportAccId = reportList[0].nCBC__Contact__r.AccountId;
+        for (nCBC__Credit_Report__c r : reportList) {
+            if (r.nCBC__FICO_Score__c > 0) {
+                ficoscore = r.nCBC__FICO_Score__c;
+            } if (r.nCBC__OFAC__c != null) {
+                ofac = r.nCBC__OFAC__C;
+            }
+        }
+        
+        List<nCBC__Credit_Record__c> credRecList = [SELECT
+                Id,
+                nCBC__scoreValue__c,
+                nCBC__modelName__c
+            FROM
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__c =: credReportId
+            AND
+                ((nCBC__scoreValue__c != null) AND (nCBC__modelName__c LIKE 'Experian%'))];
+        for (nCBC__Credit_Record__c c : credRecList) {
+            if (c.nCBC__scoreValue__c != null) {
+                scoreValue = Integer.ValueOf(c.nCBC__scoreValue__c);
+            }
+        }
+
+        Integer counter30Days = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__delinqOver30Days__c != null];
+        if (counter30Days == null) {
+            counter30Days = 0;
+        }
+
+        Integer counter60Days = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__delinqOver60Days__c != null];
+        if (counter60Days == null) {
+            counter60Days = 0;
+        }
+
+        Integer counter90Days = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__delinqOver90Days__c != null];
+        if (counter90Days == null) {
+            counter90Days = 0;
+        }
+
+        Integer chargeOffs = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__status__c =: COLLECTIONS];
+        if (chargeOffs == null) {
+            chargeOffs = 0;
+        }
+
+        Integer ownsHome = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__creditType__c =: MORTGAGE];
+        if (ownsHome == null) {
+            ownsHome = 0;
+        }
+
+        Integer bankruptcy = [SELECT
+                COUNT()
+            FROM 
+                nCBC__Credit_Record__c
+            WHERE
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND
+                nCBC__RecordType__c LIKE 'Bankruptcy%'];
+        if (bankruptcy >= 1) {
+          bankruptcies = 'Yes';
+        } else {
+            bankruptcy = 0;
+        }
+
+        Decimal debtAvailable = (Decimal) [SELECT 
+                SUM(nCBC__creditLimit__c)total
+            FROM
+                nCBC__Credit_Record__c 
+            WHERE 
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND 
+                (nCBC__creditType__c =: REVOLVING AND nCBC__status__c =: OPEN)][0].get('total');
+
+        Decimal debtBalance = (Decimal) [SELECT 
+                SUM(nCBC__balance__c)total
+            FROM 
+                nCBC__Credit_Record__c 
+            WHERE 
+                nCBC__CreditReport__r.nCBC__Contact__r.AccountId =: credReportAccId
+            AND 
+                (nCBC__creditType__c =: REVOLVING AND nCBC__status__c =: OPEN)][0].get('total');
+
+        if (debtBalance > 0 && debtAvailable > 0) {
+          revDebtAvailability = (debtBalance / debtAvailable) * 100;
+        }
+
+        Credit_Risk_Grade__c c = (Credit_Risk_Grade__c)stdController.getRecord();
+        c.FICO_Score_PG__c = ficoScore;
+        c.OFAC_Status__c = ofac;
+        c.FICO_Score_Range__c = scoreValue;
+        c.Slow_Pays__c = counter30Days + counter60Days + counter90Days;
+        c.Charge_Offs__c = chargeOffs;
+        c.Owns_Home_Property__c = ownsHome;
+        c.Bankruptcies__c = bankruptcies;
+        c.Bankruptcy__c = bankruptcy;
+        c.Revolving_Debt_Balance__c = debtBalance;
+        c.Debt_Availability__c = revDebtAvailability;
+        update c;
+
+        return save();
+    }
+
+    public PageReference Save() {
+
+        Credit_Risk_Grade__c credit = [SELECT 
+                Id, 
+                FM_Time_in_Business__c,
+                FM_Paydex_Score__c,
+                FM_Trade_Experiences__c,
+                FM_D_B_Score__c,
+                TFM_Business_Pers_Corp__c,
+                FM_Fico_Score__c,
+                FM_Revolving_Debt_Available__c,
+                FM_Owns_Home_Property__c,
+                FM_Slow_Pays__c,
+                FM_Charge_Offs__c,
+                FM_Bankruptcy__c,
+                TFM_Personal_Pers_Med__c,
+                FM_New_Used_Collateral__c,
+                FM_Useful_Life__c,
+                FM_Revenue_Generating_Essential__c,
+                FM_Down_Payment__c,
+                FM_Other_Collateral__c,
+                TFM_Collateral_Pers_Corp_Med__c,
+                FM_Bank_Account_Type__c,
+                FM_Average_Deposit_Balance__c,
+                FM_Average_Loan_Balance__c,
+                FM_NSFs_or_ODs__c,
+                TFM_Bank_Reference_Pers_Corp_Med__c,
+                Override_Points__c,
+                Overall_Credit_Score__c,
+                Final_Credit_Score__c,
+                TFM_Financial_Corp__c,
+                TFM_Business_Med__c
+            FROM 
+                Credit_Risk_Grade__c 
+            WHERE 
+                Id =: recordId];
+
+        if (credit.Override_Points__c > 0) {
+            overridePoints = credit.Override_Points__c;
+        }
+        
+        if (recTypeName == RT_PERSONAL || recTypeName == RT_PERSONAL_ADMIN) {
+            Decimal persBizTotal = 0;
+            Decimal persPersTotal = 0;
+            Decimal persCollTotal = 0;
+            Decimal persBankTotal = 0;
+
+            if (credit.TFM_Business_Pers_Corp__c != null) {
+                persBizTotal = credit.TFM_Business_Pers_Corp__c;
+            } if (credit.TFM_Personal_Pers_Med__c != null) {
+                persPersTotal = credit.TFM_Personal_Pers_Med__c;
+            } if (credit.TFM_Collateral_Pers_Corp_Med__c != null) {
+                persCollTotal = credit.TFM_Collateral_Pers_Corp_Med__c;
+            } if (credit.TFM_Bank_Reference_Pers_Corp_Med__c != null) {
+                persBankTotal = credit.TFM_Bank_Reference_Pers_Corp_Med__c;
+            }
+            
+            Decimal persTotal = persBizTotal + persPersTotal + persCollTotal + persBankTotal;
+            credit.Overall_Credit_Score__c = persTotal;
+            credit.Final_Credit_Score__c = persTotal + overridePoints;
+        } else if (recTypeName == RT_MEDICAL || recTypeName == RT_MEDICAL_ADMIN) {
+            Decimal medBizTotal = 0;
+            Decimal medPersTotal = 0;
+            Decimal medCollTotal = 0;
+            Decimal medBankTotal = 0;
+
+            if (credit.TFM_Business_Med__c != null) {
+                medBizTotal = credit.TFM_Business_Med__c;
+            } if (credit.TFM_Personal_Pers_Med__c != null) {
+                medPersTotal = credit.TFM_Personal_Pers_Med__c;
+            } if (credit.TFM_Collateral_Pers_Corp_Med__c != null) {
+                medCollTotal = credit.TFM_Collateral_Pers_Corp_Med__c;
+            } if (credit.TFM_Bank_Reference_Pers_Corp_Med__c != null) {
+                medBankTotal = credit.TFM_Bank_Reference_Pers_Corp_Med__c;
+            }
+            
+            Decimal medTotal = medBizTotal + medPersTotal + medCollTotal + medBankTotal;
+            credit.Overall_Credit_Score__c = medTotal;
+            credit.Final_Credit_Score__c = medTotal + overridePoints;
+        } else if (recTypeName == RT_CORPORATE || recTypeName == RT_CORPORATE_ADMIN) {
+            Decimal corpBizTotal = 0;
+            Decimal corpFinTotal = 0;
+            Decimal corpCollTotal = 0;
+            Decimal corpBankTotal = 0;
+
+            if (credit.TFM_Business_Pers_Corp__c != null) {
+                corpBizTotal = credit.TFM_Business_Pers_Corp__c;
+            } if (credit.TFM_Financial_Corp__c != null) {
+                corpFinTotal = credit.TFM_Financial_Corp__c;
+            } if (credit.TFM_Collateral_Pers_Corp_Med__c != null) {
+                corpCollTotal = credit.TFM_Collateral_Pers_Corp_Med__c;
+            } if (credit.TFM_Bank_Reference_Pers_Corp_Med__c != null) {
+                corpBankTotal = credit.TFM_Bank_Reference_Pers_Corp_Med__c;
+            }
+            
+            Decimal corpTotal = corpBizTotal + corpFinTotal + corpCollTotal + corpBankTotal;
+            credit.Overall_Credit_Score__c = corpTotal;
+            credit.Final_Credit_Score__c = corpTotal + overridePoints;
+        }
+
+        if (credit.Final_Credit_Score__c <= 69) {
+            credit.Final_Risk_Grade__c = 7;
+        } else if (credit.Final_Credit_Score__c >= 70 && credit.Final_Credit_Score__c <= 79) {
+            credit.Final_Risk_Grade__c = 6;
+        } else if (credit.Final_Credit_Score__c >= 80 && credit.Final_Credit_Score__c <= 104) {
+            credit.Final_Risk_Grade__c = 5;
+        } else if (credit.Final_Credit_Score__c >= 105 && credit.Final_Credit_Score__c <= 124) {
+            credit.Final_Risk_Grade__c = 4;
+        } else if (credit.Final_Credit_Score__c >= 125) {
+            credit.Final_Risk_Grade__c = 3;
+        }
+        
+        update credit;
+        return new PageReference('/' + recordId);
+    }
+
+    private static final String GUARANTOR = 'Guarantor';
+    private static final String RT_PERSONAL = 'Personal';
+    private static final String RT_CORPORATE = 'Corporate';
+    private static final String RT_MEDICAL = 'Medical';
+    private static final String RT_PERSONAL_ADMIN = 'Personal_Admin';
+    private static final String RT_CORPORATE_ADMIN = 'Corporate_Admin';
+    private static final String RT_MEDICAL_ADMIN = 'Medical_Admin';
+    private static final String COLLECTIONS = 'Collections';
+    private static final String MORTGAGE = 'Mortgage';
+    private static final String REVOLVING = 'Revolving';
+    private static final String OPEN = 'Open';
 }
