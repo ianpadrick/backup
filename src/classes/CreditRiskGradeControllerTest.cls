@@ -131,7 +131,7 @@ private class CreditRiskGradeControllerTest {
         Database.upsertResult credJudgeResult = Database.upsert(credJudge);
 
 
-        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal Guarantee' Limit 1];
+        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal' Limit 1];
 
         // Implement test code
         Credit_Risk_Grade__c riskGrade = new Credit_Risk_Grade__c();
@@ -151,9 +151,11 @@ private class CreditRiskGradeControllerTest {
 
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
-        CreditGradeController cgc = new CreditGradeController(sc);        
-
+        CreditGradeController cgc = new CreditGradeController(sc);
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
     @isTest static void test_method_two() {
@@ -286,7 +288,7 @@ private class CreditRiskGradeControllerTest {
         Database.upsertResult credJudgeResult = Database.upsert(credJudge);
 
 
-        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal Guarantee' Limit 1];
+        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal' Limit 1];
 
         // Implement test code
         Credit_Risk_Grade__c riskGrade = new Credit_Risk_Grade__c();
@@ -307,8 +309,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
 
@@ -423,7 +427,7 @@ private class CreditRiskGradeControllerTest {
         busScore.nBCR__Score_Rating__c = '500';
         Database.upsertResult busScoreResult = Database.upsert(busScore);
 
-        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal Guarantee' Limit 1];
+        RecordType pg = [select id from RecordType where SobjectType='Credit_Risk_Grade__c' and Name='Personal' Limit 1];
 
         // Implement test code
         Credit_Risk_Grade__c riskGrade = new Credit_Risk_Grade__c();
@@ -444,8 +448,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
     
     @isTest static void test_method_four() {
@@ -584,8 +590,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
     @isTest static void test_method_five() {
@@ -724,8 +732,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }    
 
     @isTest static void test_method_six() {
@@ -846,8 +856,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();
+
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
     @isTest static void test_method_seven() {
@@ -979,9 +991,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();        
 
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
     @isTest static void test_method_eight() {
@@ -1113,9 +1126,10 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();        
 
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
     }
 
     @isTest static void test_method_nine() {
@@ -1247,9 +1261,9 @@ private class CreditRiskGradeControllerTest {
         ApexPages.StandardController sc = new ApexPages.StandardController(riskGrade);
 
         CreditGradeController cgc = new CreditGradeController(sc);        
-
         cgc.SaveRecord();        
 
-    }    
-
+        CreditRiskGradeController crgc = new CreditRiskGradeController(sc);   
+        crgc.queryDNBRecords();
+    }
 }
