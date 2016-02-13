@@ -1,0 +1,373 @@
+<!-- MEDICAL GUARANTEE -->
+<apex:page sidebar="false" docType="html-5.0" standardController="Credit_Risk_Grade__c" tabStyle="Credit_Risk_Grade__c" extensions="CreditRiskGradeController">
+ <head>
+ <c:importvisualstrap />
+   
+  
+ </head>
+ <c:visualstrapblock >
+     <center>
+       <c:pageheader title="Medical Scorecard" icon="plus-sign"/>  
+     </center>
+     <apex:form >
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Information" type="info">
+           <table class="table table-bordered table-hover"> 
+             <tbody>
+               <tr>
+                 <th>Relationship</th>
+                   <td><apex:outputLink target="_top" value="/{!Credit_Risk_Grade__c.Relationship__r.Id}">{!Credit_Risk_Grade__c.Relationship__r.Name}</apex:outputLink></td>
+                 <th>Loan Name</th>
+                   <td><apex:outputLink target="_top" value="/{!Credit_Risk_Grade__c.Loan_Name__r.Id}">{!Credit_Risk_Grade__c.Loan_Name__r.Name}</apex:outputLink></td>
+               </tr>
+               <tr>
+                 <th>Date of Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Date_of_Score__c}"/></td>
+                 <th> </th>
+                   <td> </td>
+               </tr>
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Business" type="info">
+           <table class="table table-bordered table-hover"> 
+            <thead>
+              <tr>
+                <th></th>
+                <th>Value</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+             <tbody>
+               <tr>
+                 <th>Date Established</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Date_Established2__c}"/></td><td></td>
+               </tr>
+               <tr>
+                 <th>Years Licensed</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Years_Licensed__c}"/></td><td>{!Credit_Risk_Grade__c.Years_Licensed_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Practice Type</th>
+                    <td><apex:inputField value="{!Credit_Risk_Grade__c.Practice_Type__c}"/></td><td>{!Credit_Risk_Grade__c.Practice_Type_Pts__c}</td>
+
+                </tr>
+               <tr>
+                 <th>Paydex (DnB) Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Paydex_D_B_Score__c}"/></td><td>{!Credit_Risk_Grade__c.Paydex_D_B_Score_Pts__c}</td>
+
+                </tr>
+               <tr>
+                 <th>Business Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Business_Score__c}"/></td><td></td>
+               </tr>
+               
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Personal" type="success">
+           <table class="table table-bordered table-hover"> 
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Value</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+             <tbody>
+               <tr>
+                 <th>Experian FICO Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.FICO_Score_Range__c}"/></td><td>{!Credit_Risk_Grade__c.FICO_Score_Range_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Transunion FICO Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.FICO_Score_PG__c}"/></td><td></td>
+               </tr>
+               <tr>
+                 <th>Revolving Debt Availability(%)</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Debt_Availability__c}"/></td><td>{!Credit_Risk_Grade__c.Revolving_Debt_Available_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Revolving Debt Balance</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Revolving_Debt_Balance__c}"/></td><td></td>
+               </tr>
+               <tr>
+                 <th>Owns Home/Property</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Owns_Home_Property__c}"/></td><td>{!Credit_Risk_Grade__c.Owns_Home_Property_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th># of Slow Pays</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Slow_Pays__c}"/></td><td>{!Credit_Risk_Grade__c.Slow_Pays_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Charge Offs</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Charge_Offs__c}"/></td><td>{!Credit_Risk_Grade__c.Charge_Offs_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Bankruptcy</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Bankruptcies__c}"/></td><td>{!Credit_Risk_Grade__c.Bankruptcy_Pts__c}</td>
+               </tr>
+               <tr>
+                 <th>Personal Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Personal_Score__c}"/></td><td></td>
+               </tr>
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Collateral" type="success">
+           <table class="table table-bordered table-hover"> 
+             <tbody>
+               <tr>
+                 <th>New/Used</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.New_Used__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Useful Life</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Useful_Life__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Rev Generating/Essential Use</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Revenue_Generating_Essential_Use__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Down Payment (%)</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Down_Payment__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Other Collateral</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Other_Collateral__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Total Collateral Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Total_Collateral_Score__c}"/></td>
+               </tr>
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Bank Reference" type="warning">
+           <table class="table table-bordered table-hover">
+             <tbody>
+               <tr>
+                 <th>Opening Date</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Opening_Date__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Bank Account Type</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Bank_Account_Type1__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Average Deposit Balance</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Average_Deposit_Balance__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Average Loan Balance</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Average_Loan_Balance__c}"/></td>
+               </tr>
+               <tr>
+                 <th># NSF's or OD's</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.NSF_s_or_OD_s__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Bank Score</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Bank_Score__c}"/></td>
+               </tr>
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Overall Credit Score" type="warning">
+           <table class="table table-bordered table-hover"> 
+             <tbody>
+               <tr>
+                 <th>Overall Credit Score</th>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Overall_Credit_Score__c == null}">
+                     <td>
+                      <span class="badge progress-bar-default">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Overall_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Overall_Credit_Score__c != null && Credit_Risk_Grade__c.Overall_Credit_Score__c <= 79}">
+                     <td>
+                      <span class="badge progress-bar-danger">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Overall_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Overall_Credit_Score__c != null && Credit_Risk_Grade__c.Overall_Credit_Score__c >= 80 && Credit_Risk_Grade__c.Overall_Credit_Score__c <= 124}">
+                     <td>
+                      <span class="badge progress-bar-warning">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Overall_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Overall_Credit_Score__c != null && Credit_Risk_Grade__c.Overall_Credit_Score__c >= 125}">
+                     <td>
+                      <span class="badge progress-bar-success">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Overall_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <th></th>
+                   <th></th>
+                </tr>
+                <tr>
+                  <th>Override Points(+/-)</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Override_Points__c}"/></td>
+                  <th>NOTE: Explain Justification for Override in Credit Comments box</th>
+                  <th></th>
+                </tr>
+                <tr>
+                 <th>Final Credit Score</th>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Credit_Score__c == null}">
+                     <td>
+                      <span class="badge progress-bar-default">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Credit_Score__c != null && Credit_Risk_Grade__c.Final_Credit_Score__c <= 79}">
+                     <td>
+                      <span class="badge progress-bar-danger">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Credit_Score__c != null && Credit_Risk_Grade__c.Final_Credit_Score__c >= 80 && Credit_Risk_Grade__c.Final_Credit_Score__c <= 124}">
+                     <td>
+                      <span class="badge progress-bar-warning">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Credit_Score__c != null && Credit_Risk_Grade__c.Final_Credit_Score__c >= 125}">
+                     <td>
+                      <span class="badge progress-bar-success">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Credit_Score__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                 <th>Final Risk Grade</th>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Risk_Grade__c == null}">
+                     <td>
+                      <span class="badge progress-bar-default">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Risk_Grade__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Risk_Grade__c != null && Credit_Risk_Grade__c.Final_Risk_Grade__c >= 6}">
+                     <td>
+                      <span class="badge progress-bar-danger">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Risk_Grade__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Risk_Grade__c != null && Credit_Risk_Grade__c.Final_Risk_Grade__c >= 4 && Credit_Risk_Grade__c.Final_Risk_Grade__c < 6}">
+                     <td>
+                      <span class="badge progress-bar-warning">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Risk_Grade__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+                   <apex:outputPanel rendered="{!Credit_Risk_Grade__c.Final_Risk_Grade__c != null && Credit_Risk_Grade__c.Final_Risk_Grade__c < 4}">
+                     <td>
+                      <span class="badge progress-bar-success">
+                        <apex:outputText style="font-size:12pt;" value="{!Credit_Risk_Grade__c.Final_Risk_Grade__c}"/>
+                      </span>
+                     </td>
+                   </apex:outputPanel>
+               </tr>
+             </tbody>
+           </table>
+           <center>
+             <apex:commandLink styleClass="btn btn-warning" value="Calculate" action="{!SaveRecord}" target="_top"/>
+           </center>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Other" type="danger">
+           <table class="table table-bordered table-hover"> 
+             <tbody>
+               <tr>
+                 <th>OFAC Cleared</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.OFAC_Cleared__c}"/></td>
+                 <th>Term</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Term2__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Evidence of Suits, Judgements, Liens</th>
+                   <td><apex:outputField value="{!Credit_Risk_Grade__c.Evidence_of_Suits_Judgements_Liens__c}"/></td>
+                 <th>Existing Exposure</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Existing_Exposure__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Buy Rate</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Buy_Rate__c}"/></td>
+                 <th>Total Exposure</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Total_Exposure__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Approval Status</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Approval_Status__c}"/></td>
+                 <th>Approved Date</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Approved_Date__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Approved By</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Approved_By__c}"/></td>
+                 <th>Salesperson</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Salesperson__c}"/></td>
+               </tr>
+               <tr>
+                 <th>Pending - Additional Information Needed for Credit Decision</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Pending_Need_Additional_Information__c}"/></td>
+                 <th></th>
+                   <td></td>
+               </tr>
+             </tbody>
+           </table>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     <c:row >
+       <c:column type="col-md-12">
+         <c:panel title="Summary" type="danger">
+           <table class="table table-bordered table-hover"> 
+             <tbody>
+               <tr>
+                 <th>Summary/Additional Requirements</th>
+                   <td><apex:inputField value="{!Credit_Risk_Grade__c.Summary_Additional_Requirements__c}"/></td>
+               </tr>
+             </tbody>
+           </table>
+           <center>
+             <apex:commandLink styleClass="btn btn-danger" value="Update" action="{!SaveRecord}" target="_top"/>
+           </center>
+         </c:panel>
+       </c:column>       
+     </c:row>
+     </apex:form>
+   </c:visualstrapblock>  
+ </apex:page>

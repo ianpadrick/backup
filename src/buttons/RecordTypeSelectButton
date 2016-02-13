@@ -1,0 +1,13 @@
+/setup/ui/recordtypeselect.jsp?ent=01Ii0000001mJ2H 
+& 
+save_new_url=%2Fa1M%2Fe%3F 
+& 
+retURL=/{!Credit_Risk_Grade__c.Id} 
+& 
+CF00Ni000000DCLM8_lkid={!LLC_BI__Loan__c.LLC_BI__AccountId__c} 
+& 
+CF00Ni000000DCLM8={!LLC_BI__Loan__c.LLC_BI__Account__c} 
+& 
+CF00Ni000000DBgxS_lkid={!LLC_BI__Loan__c.Id} 
+& 
+CF00Ni000000DBgxS={!LLC_BI__Loan__c.Name}

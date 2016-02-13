@@ -1,0 +1,396 @@
+<apex:page standardController="LLC_BI__Loan__c" extensions="FilteredOverviewController" standardStyleSheets="false">
+
+<head>
+<style type="text/css">
+a img { border: none; }
+a, a:hover{
+outline:none;
+}
+.hidden{
+display:none;
+}
+.clearDiv{
+    clear:both;
+}
+.center{
+    display:block;
+    margin:0px auto;
+}
+.floatleft{
+    float:left;
+}
+.floatright{
+    float:right;
+}
+
+.padding{
+    padding:10px;
+}
+.spacer{
+    height:20px;
+    display:block;
+    }
+.smspacer{
+    height:12px;
+    display:block;
+    }
+    
+.marginleft{
+    margin-left:20px;
+}
+.marginright{
+    margin-right:20px;
+}
+.rounded6{
+-webkit-border-radius: 6px;
+-moz-border-radius: 6px;
+border-radius: 6px;
+overflow:hidden;
+}
+
+.rounded4{
+-webkit-border-radius: 4px;
+-moz-border-radius: 4px;
+border-radius: 4px;
+overflow:hidden;
+}
+
+.shadow{
+text-shadow: 1px 1px 1px #767676;
+filter: dropshadow(color=#767676, offx=1, offy=1); 
+}
+
+.ltgrey{
+background-color:#f8f8f8;
+}
+.border{
+    border: 1px solid #ebebeb;
+}
+
+#sfhome {
+    background-image: url('{!URLFOR($Resource.processViewImages, "PHP_icon_circleback.png")}');
+    background-repeat: no-repeat;
+    background-position: center center;
+    min-height:500px;
+    width:700px;
+    font-family: Arial, Helvetica, sans-serif;    
+}
+
+.sficon{
+    width:100px;
+    min-height:125px;
+    background-repeat: no-repeat;
+    background-position: center 0px;
+    margin: 0px;
+    padding: 0px;
+    overflow: visible;
+    position: absolute;
+    z-index: 10;
+    text-align:center;
+}
+
+.sficon .sfnumber{
+    width:44px;
+    height:43px;
+    line-height:44px;
+    background-image: url('{!URLFOR($Resource.processViewImages, "PHP_icon_circlenum.png")}');
+    background-repeat: no-repeat;
+    background-position: 0px 0px;
+    margin: 0px;
+    padding: 0px;
+    overflow: visible;
+    position: relative;
+    z-index: 11;
+    color:#fff;
+    font-size:11px;
+    font-weight:bold;
+    letter-spacing:-.1pt;
+    text-align:center;
+    display:block;
+    left: -6px;
+    top: -16px;
+}
+
+.sficon h4 a{
+font-size:13px;
+line-height:16px;
+color:#202020;
+display:block;
+position:relative;
+top:20px; /* 12px */
+text-decoration:none;
+margin:0px;
+padding:0px;
+}
+#sftotals{
+width:680px;
+font-family: Arial, Helvetica, sans-serif;    
+}
+#sftotals ul{
+display:block;
+margin:0px;
+padding:0px;
+
+}
+#sftotals li{
+float:left;
+margin:0px;
+padding:0px;
+width:225px;
+}
+
+#sftotals li a.sftotal{
+    display:block;
+    width:172px;
+    height:30px;
+    background-repeat: no-repeat;
+    background-position: 6px 6px;
+    margin:0px;
+    padding-top: 4px;
+    padding-right: 10px;
+    padding-bottom: 4px;
+    padding-left: 38px;
+    color:#202020;
+    text-decoration:none;
+    font-weight:bold;
+    line-height:30px;
+}
+#sftotals li a.sftotal span{
+    float:right;
+    font-size:21px;
+    font-family: Georgia, "Times New Roman", Times, serif;
+    font-style: italic;
+    font-weight: normal;
+    letter-spacing: -0.3pt;    
+}
+#sftotals li a.won{
+    background-color:#f4ffe5;
+}
+#sftotals li a.won span{
+    color:#006666;
+}
+
+#sftotals li a.lost{
+    background-color:#f6dfd7;
+}
+#sftotals li a.lost span{
+    color:#c20308;
+}
+
+#sftotals li a.hold{
+    background-color:#fdf1d1;
+}
+#sftotals li a.hold span{
+    color:#e5911f;
+}
+
+h1 {
+font-size:26px;
+line-height:28px;
+}
+
+.red, a.checkon:hover, a.checkoff:hover{
+color:#c41230;
+}
+
+.shadow{
+    text-shadow: 1px 1px 1px #767676;
+    filter: dropshadow(color=#767676, offx=1, offy=1); 
+}
+
+.bluevertsep{
+    display: block;
+    width: 1px;
+    margin-right: 12px;
+    padding-right: 12px;
+    border-right-width: 1px;
+    border-right-style: solid;
+    border-right-color: #b3c1cb;
+}
+
+#container {
+    width: 700px;
+    min-height: 500px;
+    position: relative;
+    margin-top: 33px;
+}
+</style>
+
+<apex:includeScript value="{!URLFOR($Resource.LLC_BI__llc_web_ui, 'jquery/js/jquery.min.js')}"/>
+    <script>
+        $(document).ready(function(){
+            getOverviewSettings();
+        });
+        
+        var stages = {!stagesJson};
+        var stageCount = {!stageCountJson};
+        var labelsMap = {};
+        var resourcesUrls = {};
+        
+        var getOverviewSettings = function(){
+            var flows = [];
+            var totals = [];
+            
+            $.each(stages, function(i, p){
+                if (p.Flow_Setting__c == true){
+                    flows.push(p);
+                } else {
+                    totals.push(p);
+                }
+            });
+            createFlowProcesses(flows);
+            createTotalsFooter(totals);
+        };
+        
+        var createFlowProcesses = function(flows){
+            var markup = '';
+            $.each(flows, function(i, p){
+                // var url = p.Link_URL__c || '#';
+                /*
+                if ('{!selectedOption}' != '--None--' && '{!selectedBranch}' == '--None--') {
+                    var url = '/00Of0000000OkHu?' + 'pv1={!selectedOption}';
+                } else if ('{!selectedOption}' == '--None--' && '{!selectedBranch}' != '--None--') {
+                    var url = '/BranchTest?' + 'pv1={!selectedBranch}';
+                }
+                */
+                //var url = '/00Of0000000OkHu?'+ 'pv1={!selectedOption}';
+                var num = stageCount[p.Name];
+                var label = labelsMap[p.Custom_Label_Key__c];
+                var icon = resourcesUrls[p.StaticResourceName__c] + p.IconImageName__c;
+                if ('{!selectedOption}' != '--None--' && '{!selectedBranch}' == '--None--') {
+                    var url = '/00Oi0000005fbag?' + 'pv1={!selectedOption}&' + 'pv2=' + label;
+                } else if ('{!selectedOption}' == '--None--' && '{!selectedBranch}' != '--None--') {
+                    var url = '/00Oi0000005fbb5?' + 'pv1={!selectedBranch}&' + 'pv2=' + label;
+                }
+
+                markup += '<div class="clearDiv"></div>'+
+                          '<div class="'+ p.IconStyleClass__c +'" style="background-image: url(\''+ icon +'\');">'+
+                              '<div class="sfnumber">'+ num +'</div>'+
+                              '<h4><a href="'+ url +'" onclick="stuff">'+ label +'</a></h4>'+
+                              '<div class="clearDiv"></div>'+
+                          '</div>';
+            });
+            $('#container').html(markup);
+            distributeFields();
+        };
+        
+        var createTotalsFooter = function(totals){
+            var lis = '';
+            $.each(totals, function(i, t){
+                var url = t.Link_URL__c || '#';
+                var url = '/' + selected;
+                var num = stageCount[t.Name];
+                var label = labelsMap[t.Custom_Label_Key__c];
+                var icon = resourcesUrls[t.StaticResourceName__c] + t.IconImageName__c;
+                    
+                lis += '<li>'+
+                           '<a href="'+ url +'" class="sftotal '+ t.IconStyleClass__c +' rounded4" style="background-image: url(\''+ icon +'\')"> '+ label +
+                                '<span>'+ num +'</span>'+
+                           '</a>'+
+                       '</li>';
+             });
+             $('#sfTotalsUL').html(lis);
+        };
+    
+        var distributeFields = function(){
+            var radius = 200;
+            var fields = $('.sficon'), container = $('#container'),
+                width = container.width(), height = container.height(),
+                angle = 130, step = (2*Math.PI) / fields.length;
+            
+            fields.each(function() {
+                var x = Math.round(width/2 + radius * Math.cos(angle) - $(this).width()/2);
+                var y = Math.round(height/2 + radius * Math.sin(angle) - $(this).height()/2);
+                $(this).css({
+                    left: x + 'px',
+                    top: y + 'px'
+                });
+                angle += step;
+            });
+        };
+    </script>
+</head>
+<body>
+    <!-- <br /> -->
+    <div class="clearDiv"></div>
+
+    <apex:form style="padding-left: 71px; padding-top: 18px;">
+        <apex:outputLabel value="Select Region" style="margin-left: 47px; margin-bottom: 14px; font-weight: bold; font-size: 130%;"/>
+        <apex:outputLabel value="Select Branch" style="margin-left: 194px; margin-bottom: 14px; font-weight: bold; font-size: 130%;"/>
+        <br/>
+        <apex:selectList id="chooseRegion" value="{!selectedOption}" size="1" title="Region">
+            <apex:selectOption itemValue="1" itemLabel="--None--"/>
+            <apex:selectOption itemValue="a1pi000000064yZ" itemLabel="Credit Operations"/>
+            <apex:selectOption itemValue="a1pf0000001H2aY" itemLabel="LAOC"/>
+            <apex:selectOption itemValue="a1pi000000064ye" itemLabel="Life Sciences East"/>
+            <apex:selectOption itemValue="a1pi000000064yj" itemLabel="Life Sciences Silicon Valley"/>
+            <apex:selectOption itemValue="a1pi000000064yo" itemLabel="Life Sciences West"/>
+            <apex:selectOption itemValue="a1pi000000064z8" itemLabel="Mid Atlantic South"/>
+            <apex:selectOption itemValue="a1pf0000001H2ad" itemLabel="Midwest"/>
+            <apex:selectOption itemValue="a1pi000000064zD" itemLabel="Mountain Northwest"/>
+            <apex:selectOption itemValue="a1pi000000064zN" itemLabel="Northeast"/>
+            <apex:selectOption itemValue="a1pi000000064zS" itemLabel="PSW"/>
+            <apex:selectOption itemValue="a1pi000000064zc" itemLabel="Square Roots"/>
+            <apex:selectOption itemValue="a1pi000000064zh" itemLabel="SV Technology"/>
+            <apex:selectOption itemValue="a1pi000000064zm" itemLabel="Texas"/>
+            <apex:selectOption itemValue="a1pi000000064zw" itemLabel="VCS"/>
+        </apex:selectList>
+        <apex:commandButton action="{!setupData}" value="Apply Filter" id="regionButton" style="margin-left: 4px;"/>
+
+        <!-- <apex:outputLabel value="Select Branch" style="margin-left: 44px; margin-bottom: 14px; font-weight: bold; font-size: 130%;"/> -->
+        <apex:selectList id="chooseBranch" value="{!selectedBranch}" size="1" title="Branch" style="margin-left: 44px;">
+            <apex:selectOption itemValue="1" itemLabel="--None--"/>
+            <apex:selectOption itemValue="a0Bi00000033Acw" itemLabel="Austin"/>
+            <apex:selectOption itemValue="a0Bi00000033Acs" itemLabel="Boston"/>
+            <apex:selectOption itemValue="a0Bi00000033Ad1" itemLabel="Credit Operations"/>
+            <apex:selectOption itemValue="a0Bi00000033Acp" itemLabel="DC Market"/>
+            <apex:selectOption itemValue="a0Bi00000033Acj" itemLabel="Denver"/>
+            <apex:selectOption itemValue="a0Bi00000033Act" itemLabel="Durham"/>
+            <apex:selectOption itemValue="a0Bf0000000rztV" itemLabel="LAOC"/>
+            <apex:selectOption itemValue="a0Bi00000033Ack" itemLabel="Life Sciences East"/>
+            <apex:selectOption itemValue="a0Bi00000033Acl" itemLabel="Life Sciences Silicon Valley"/>
+            <apex:selectOption itemValue="a0Bi00000033Acv" itemLabel="Life Sciences West"/>
+            <apex:selectOption itemValue="a0Bf0000000rzta" itemLabel="Midwest"/>
+            <apex:selectOption itemValue="a0Bi00000033Acz" itemLabel="New York"/>
+            <apex:selectOption itemValue="a0Bi00000033Acx" itemLabel="PSW"/>
+            <apex:selectOption itemValue="a0Bi00000033Ad0" itemLabel="Seattle"/>
+            <apex:selectOption itemValue="a0Bi00000033Acy" itemLabel="Silicon Valley"/>
+            <apex:selectOption itemValue="a0Bi00000033Aco" itemLabel="Square Roots"/>
+            <apex:selectOption itemValue="a0Bi00000033Ach" itemLabel="Structured Finance"/>
+            <apex:selectOption itemValue="a0Bi00000033Acn" itemLabel="Syndications"/>
+            <apex:selectOption itemValue="a0Bi00000033Acm" itemLabel="VCS East"/>
+            <apex:selectOption itemValue="a0Bi00000033Acu" itemLabel="VCS West"/>
+        </apex:selectList>
+        <apex:commandButton action="{!setupDataBranch}" value="Apply Filter" id="branchButton" style="margin-left: 4px;"/>
+    </apex:form> 
+
+    <div class="clearDiv"></div>
+    <!-- <br /> -->
+
+    
+    <div class="clearDiv" style="height: 20px;"></div>
+    <div class="bluevertsep" style="float: left;"></div>
+    <div id="sfhome" class="rounded6 ltgrey border">
+        <div id="container">
+        </div>
+        <div class="clearDiv"></div>
+    </div> <!--SF HOMEPAGE -->
+    
+    <div class="clearDiv spacer"></div>
+    
+    <div id="sftotals" class="rounded6 ltgrey border padding">
+        <ul id="sfTotalsUL"></ul>
+        <div class="clearDiv"></div>
+    </div>
+    
+    <div id="labels" style="display:none">
+        <apex:repeat value="{!stages}" var="s">
+            <script>
+                labelsMap.{!s.Custom_Label_Key__c} = '{!$Label[s.Custom_Label_Key__c]}';
+                resourcesUrls.{!s.StaticResourceName__c} = '{!URLFOR($Resource[s.StaticResourceName__c])}/';
+            </script>
+        </apex:repeat>
+    </div>
+</body>
+
+</apex:page>

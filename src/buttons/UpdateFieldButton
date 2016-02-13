@@ -1,0 +1,11 @@
+{!REQUIRESCRIPT('/soap/ajax/25.0/connection.js')} 
+{!REQUIRESCRIPT('/soap/ajax/25.0/apex.js')} 
+
+//Create the Loan
+var loan = new sforce.SObject('LLC_BI__Loan__c');
+loan.Id = '{!LLC_BI__Loan__c.Id}';
+loan.Checkbox_Field__c = 'true';
+result = sforce.connection.update([loan]); 
+
+var urlOfRedirectLocation = '/' + result[0].id; 
+window.top.location.href = urlOfRedirectLocation; 

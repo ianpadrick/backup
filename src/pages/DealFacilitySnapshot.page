@@ -1,0 +1,67 @@
+<apex:page Standardcontroller="LLC_CDS__Deal_Facility__c" extensions="DealFacilitySnapshotController" title="Deal Facility Snapshot" standardStyleSheets="true">
+<nDESIGN:Includes enableBootstrap3="false" />
+    <div class="force">
+    <apex:outputPanel rendered="{!facilities.size = 0}" >
+        No facilities to display.
+    </apex:outputPanel>
+    <c:Accordion rendered="{!facilities.size > 0}">
+            <c:AccordionSection title="Facilities">
+                <table class="table table-bordered border-striped">
+                    <thead>
+                        <tr>
+                            <th><b>Facility Name</b></th>
+                            <th><b>Stage</b></th>
+                            <th><b>Loan Class</b></th>
+                            <th><b>Product</b></th>
+                            <th><b>Interest Rate</b></th>
+                            <th><b>Commitment</b></th>
+                            <th><b>Outstanding</b></th>
+                            <th><b>New Money</b></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!facilities}" var="f">
+                            <tr>
+                                <td>
+                                    <u><apex:outputlink value="/{!f.Id}" target="_top">{!f.Name}</apex:outputlink></u>
+                                </td>
+                                <td><apex:outputField value="{!f.LLC_BI__Stage__c}"/></td>
+                                <td><apex:outputField value="{!f.LLC_BI__Loan_Class__c}"/></td>
+                                <td><apex:outputField value="{!f.LLC_BI__Product__c}"/></td>
+                                <td><apex:outputField value="{!f.LLC_BI__InterestRate__c}"/></td>
+                                <td><apex:outputField value="{!f.LLC_BI__Amount__c}"/></td>
+                                <td><apex:outputField value="{!f.LLC_BI__Principal_Balance__c}"/></td>
+                                <td><apex:outputField value="{!f.New_Money__c}"/></td>
+
+                            </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <b><apex:outputText value="${0,number, ###,###,###,###}">  
+                                    <apex:param value="{!totalFacAmt}"/>
+                                </apex:outputText></b>
+                            </td>
+                            <td>
+                                <b><apex:outputText value="${0,number, ###,###,###,###}">  
+                                    <apex:param value="{!totalBalanceAmt}"/>
+                                </apex:outputText></b>
+                            </td>
+                            <td>
+                                <b><apex:outputText value="${0,number, ###,###,###,###}">  
+                                    <apex:param value="{!totalNewMoneyAmt}"/>
+                                </apex:outputText></b>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </c:AccordionSection>
+    </c:Accordion>
+    </div>
+</apex:page>

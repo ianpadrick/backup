@@ -1,0 +1,326 @@
+<apex:page Standardcontroller="Account" extensions="ClientSnapshotController" title="ACBS View" standardStyleSheets="true" showHeader="false" sidebar="false">
+    <!--<style>
+        .bPageBlock {
+            background-color: #edd5b7 !important;
+        }
+
+        .columnHeader {
+            background-color: #e4c5a1 !important;
+        }
+    </style>-->
+    
+    
+    
+    <apex:pageblock >
+            <p style="font-weight:800;font-size:35px">{!Account.Name}</p>
+            <p style="font-weight:800;font-size:12px">{!Account.Name} Client Site</p>
+        <br/>
+            <apex:panelGrid id="AccountDetails">
+                <apex:outputText style="font-weight:800;font-size:20px" value="" id="Details"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Info}" var="i">
+                <apex:column style="width:200px" value="{!i.Portfolio__c}" headerValue="Portfolio #" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!i.LLC_BI__Tax_Identification_Number__c}" headerValue="Tax ID" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!i.LOOKUP_REGION__r.Name}" headerValue="Region" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!i.LLC_Branch__r.Name}" headerValue="Branch" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!i.Owner.Name}" headerValue="Banker" headerClass="columnHeader"/>                
+            </apex:pageBlockTable>
+        <br/>
+            <apex:panelGrid id="AccountAddress">
+                <apex:outputText style="font-weight:800;font-size:20px" value="" id="Address"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Address}" var="a">
+                <apex:column style="width:200px" value="{!a.BillingStreet}" headerValue="Street" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.BillingCity}" headerValue="City" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.BillingState}" headerValue="State" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.BillingPostalCode}" headerValue="Zip Code" headerClass="columnHeader"/>                
+            </apex:pageBlockTable> 
+            <apex:panelGrid id="Compliance">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Compliance" id="CompInfo"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!RelCovs}" var="r"> 
+                <apex:column style="width:200px" headerValue="Compliance as of" headerClass="columnHeader">      
+                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!Today}" />
+                        </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" value="{!r.Rel_Cov_Reporting_In_Compliance__c}" headerValue="In Reporting Compliance?" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!r.Rel_Cov_Financial_In_Compliance__c}" headerValue="In Financial Compliance?" headerClass="columnHeader"/> 
+            </apex:pageBlockTable>
+            <!--<apex:panelGrid id="Covenants">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Relationship Covenants" id="CovInfo"/>
+            </apex:panelGrid>
+            <!--<apex:pageBlockTable value="{!Covenants}" var="c">
+                <apex:column style="width:200px"  headerValue="Name" headerClass="columnHeader"/>
+                <!--<apex:column style="width:200px" headerValue="Compliance as of" headerClass="columnHeader">      
+                    <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!c.CreatedDate}" />
+                        </apex:outputText>
+                </apex:column>-->
+                <!--<apex:column style="width:200px"  headerValue="In Reporting Compliance?" headerClass="columnHeader"/>
+                <apex:column style="width:200px"  headerValue="In Financial Compliance?" headerClass="columnHeader"/> 
+            </apex:pageBlockTable>-->
+            <apex:panelGrid id="Aggregation">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Aggregration" id="AggInfo"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Aggregations}" var="a">
+                <!--<apex:column style="width:200px" value="{!a.Account__c}" headerValue="Account" headerClass="columnHeader"/>-->
+                <apex:column style="width:200px" value="{!a.Aggregated_Party__c}" headerValue="Aggregated Party" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Commitment" headerClass="columnHeader">
+                    <apex:outputText value="{0, number, $###,###,##0}">
+                        <apex:param value="{!a.Total_Committed__c}"/>
+                    </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" headerValue="Total Aggregated Amount" headerClass="columnHeader">
+                    <apex:outputText value="{0, number, $###,###,##0}">
+                        <apex:param value="{!a.Total_Aggregated_Amount__c}"/>
+                    </apex:outputText>
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Agg_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <!--<apex:column style="width:200px" value="{!a.Total_Aggregated_Amount__c}" headerValue="Total Aggregated Amount #" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.Total_Committed__c}" headerValue="Total Committed" headerClass="columnHeader"/>-->
+            </apex:pageBlockTable>
+            <apex:panelGrid id="Participation">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Participation" id="ParticInfo"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Participations}" var="p">
+                <apex:column style="width:200px" headerValue="Account" headerClass="columnHeader">
+                    <apex:outputLink value="{!p.Account__c}">{!p.Account__r.Name}</apex:outputLink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!p.Bank_Percentage__c}" headerValue="Bank Percentage" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!p.Participant__c}" headerValue="Participant" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Participation Amount" headerClass="columnHeader">
+                    <apex:outputText value="{0, number, $###,###,##0}">
+                        <apex:param value="{!p.Participation_Amount__c}"/>
+                    </apex:outputText>
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Ptp_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <!--<apex:column style="width:200px" value="{!p.Participation_Amount__c}" headerValue="Participation Amount" headerClass="columnHeader"/>-->
+                <apex:column style="width:200px" value="{!p.Portfolio_Number__c}" headerValue="Portfolio #" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Total Facility Size" headerClass="columnHeader">
+                    <apex:outputText value="{0, number, $###,###,##0}">
+                        <apex:param value="{!p.Total_Facility_Size__c}"/>
+                    </apex:outputText>
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Ptp_Fac_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+            </apex:pageBlockTable>
+            <apex:panelGrid id="Guarantors">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Guarantors" id="GuarantorInfo"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Guarantors}" var="g">
+                <apex:column style="width:200px" headerValue="Account Name" headerClass="columnHeader">
+                    <apex:outputlink value="/{!g.Guarantor_Account__r.Id}" target="_top">{!g.Guarantor_Account__r.Name}</apex:outputlink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!g.Guarantor_Portfolio__c}" headerValue="Portfolio #" headerClass="columnHeader"/>
+            </apex:pageBlockTable>
+            <apex:panelGrid id="Guarantees">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Guarantees" id="GuaranteeInfo"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Guarantees}" var="g">            <!-- Fake Fields Below -->
+                <apex:column style="width:200px" headerValue="Account Name" headerClass="columnHeader">
+                    <apex:outputlink value="/{!g.Guarantee_Account__r.Id}" target="_top">{!g.Guarantee_Account__r.Name}</apex:outputlink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!g.Guarantee_Portfolio__c}" headerValue="Portfolio #" headerClass="columnHeader"/>
+            </apex:pageBlockTable>
+            <apex:panelGrid id="AccountDeals">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Deal Facilities" id="Deals"/>
+            </apex:panelGrid>
+                <apex:pageBlockTable value="{!Deals}" var="d">
+                <apex:column style="width:200px" value="{!d.ACBS_Facility__c}" headerValue="Facility #" headerClass="columnHeader"/>           
+                <apex:column style="width:200px" headerValue="Facility Type" headerClass="columnHeader">
+                    <apex:outputLink value="{!d.Id}">{!d.Loan_Type__c}</apex:outputLink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!d.LLC_BI__Amount__c}" headerValue="Commitment" headerClass="columnHeader">
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Deal_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <apex:column style="width:200px" value="{!d.LLC_BI__Total_Disbursed__c}" headerValue="Total Outstanding" headerClass="columnHeader">
+                	<apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Deal_Disp_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                    </apex:column>    
+                <apex:column style="width:200px" value="{!d.Facility_Status__c}" headerValue="Status" headerClass="columnHeader"/>                 
+            </apex:pageBlockTable>
+            <apex:panelGrid id="AccountFacilities">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Facilities" id="Facilities"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Facilities}" var="f">
+                <apex:column style="width:200px" headerValue="Facility #" headerClass="columnHeader">
+                    <apex:outputlink value="/{!f.Id}" target="_top">{!f.ACBS_Facility__c}</apex:outputlink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!f.LLC_BI__Description__c}" headerValue="Description" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!f.LLC_BI__Amount__c}" headerValue="Commitment" headerClass="columnHeader">
+                	<apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Fac_Comm_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <apex:column style="width:200px" value="{!f.LLC_BI__Total_Disbursed__c}" headerValue="Total Outstanding" headerClass="columnHeader">
+                	<apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Fac_Out_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <apex:column style="width:200px" value="{!f.Facility_Status__c}" headerValue="Facility Status" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Facility Effective Date" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                <apex:param value="{!f.LLC_BI__CloseDate__c}" />   
+                        </apex:outputText>
+                </apex:column>
+                <!--<apex:column style="width:200px" headerValue="Date Updated" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!f.LastModifiedDate}" /> a
+                        </apex:outputText>
+                </apex:column>-->
+            </apex:pageblocktable>
+        
+        
+        
+            <apex:panelGrid id="AccountLoanBalances">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Loan Balances" id="LoanBalances"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Balances}" var="b">
+                <!--<apex:column style="width:200px" headerValue="Date Booked" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!b.LLC_BI__CloseDate__c}" /> 
+                        </apex:outputText>
+                </apex:column>-->
+                <apex:column style="width:200px" value="{!b.ACBS_Loan__c}" headerValue="Note #" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!b.Product_Group__c}" headerValue="Product" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!b.LLC_BI__Total_Disbursed__c}" headerValue="Principal Balance" headerClass="columnHeader">
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Loan_Total}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>    
+                <apex:column style="width:200px" value="{!b.VB_Risk_Grade__c}" headerValue="Risk Rating" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!b.LLC_BI__Status__c}" headerValue="Status" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Date Opened" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!b.Booked_Boarded_Date__c}" /> 
+                        </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" headerValue="Maturity Date" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!b.LLC_BI__Maturity_Date__c}" /> 
+                        </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" value="{!b.LLC_BI__Status__c}" headerValue="Status" headerClass="columnHeader"/>
+                <!--<apex:column style="width:200px" headerValue="Date Updated" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!b.LastModifiedDate}" /> 
+                        </apex:outputText>
+                </apex:column>-->
+            </apex:pageblocktable>
+        
+        
+            <apex:panelGrid id="SFGLoanBalances">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="SFG Loan Balances" id="ABL"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!ABL}" var="a">
+                <apex:column style="width:200px" value="{!a.Stucky_Loan_Number__c}" headerValue="Loan Number" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.LLC_BI__Product__c}" headerValue="Loan Type" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!a.LLC_BI__Status__c}" headerValue="Loan Status" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Maturity Date" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!a.LLC_BI__Maturity_Date__c}" /> 
+                        </apex:outputText>
+                </apex:column>
+                
+                <apex:column style="width:200px" value="{!a.LLC_BI__Amount__c}" headerValue="Loan Commitment" headerClass="columnHeader">
+                    <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!ABL_Total_Commitment}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>    
+                
+                
+                <apex:column style="width:200px" value="{!a.Stucky_Loan_Availability__c}" headerValue="Availability" headerClass="columnHeader">
+                <apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!ABL_Total_Avail}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                    
+                <apex:column style="width:200px" value="{!a.LLC_BI__AmountOutstanding__c}" headerValue="Loan Outstanding" headerClass="columnHeader">
+                	<apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!ABL_Total_Out}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                <apex:column style="width:200px" headerValue="Date Updated" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!a.LastModifiedDate}" /> 
+                        </apex:outputText>
+                </apex:column>
+            </apex:pageblocktable>
+            <apex:panelGrid id="AccountDeposits">
+                <br/>
+                <apex:outputText style="font-weight:800;font-size:20px" value="Deposits" id="Deposits"/>
+            </apex:panelGrid>
+            <apex:pageBlockTable value="{!Deposits}" var="d">
+                <apex:column style="width:200px" headerValue="Account Name" headerClass="columnHeader">
+                        <apex:outputlink value="/{!d.LLC_BI__Account__r.Id}" target="_top">{!d.LLC_BI__Account__r.Name}</apex:outputlink>
+                </apex:column>
+                <apex:column style="width:200px" value="{!d.Account_Number__c}" headerValue="Account Number" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!d.LLC_BI__Product__c}" headerValue="Product" headerClass="columnHeader"/>
+                <apex:column style="width:200px" value="{!d.Current_Balance__c}" headerValue="Collected Balance" headerClass="columnHeader">
+                	<apex:facet name="footer">
+                        <apex:outputText value="{0,number,$#,###,###.00}">
+                            <apex:param value="{!Dep_Total_Bal}" />
+						</apex:outputText>
+                    </apex:facet>
+                </apex:column>
+                    
+                <apex:column style="width:200px" value="{!d.LLC_BI__Interest_Rate__c}" headerValue="Interest Rate" headerClass="columnHeader"/>
+                <apex:column style="width:200px" headerValue="Date Opened" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!d.LLC_BI__Open_Date__c}" /> 
+                        </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" headerValue="Date Updated" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!d.LastModifiedDate}" /> 
+                        </apex:outputText>
+                </apex:column>
+                <apex:column style="width:200px" headerValue="As Of" headerClass="columnHeader">
+                        <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                            <apex:param value="{!d.As_Of__c}" /> 
+                        </apex:outputText>
+                </apex:column>
+            </apex:pageblocktable>
+    </apex:pageblock>
+</apex:page>

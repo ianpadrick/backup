@@ -1,0 +1,302 @@
+<apex:page Standardcontroller="Account" extensions="VCFirmSnapshotController" title="VC Firm Snapshot" standardStyleSheets="false">
+    <style>
+        .columnHeader {
+            text-align: center;
+        }
+        .numericColumn{
+            width: 50px;
+            text-align: right;
+        }
+        .currencyColumn{
+            width: 150px;
+            text-align: right;
+        }
+        .panelHead{
+            margin-top: 25px;
+            margin-bottom: 5px;
+        }
+        .panelTitle{
+            font-weight: 800;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .panelSubtitle{
+            font-weight: 800;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+    <apex:pageblock >
+        <p style="font-weight:800;font-size:35px">{!Account.Name}</p>
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="borrowers_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Square 1 Borrowers
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="panelSubtitle" layout="block">
+                (CDARs and Invest Not Included In Deposits)
+            </apex:outputPanel>
+        </apex:outputPanel>       
+        <apex:pageBlockTable value="{!Borrowers}" var="b">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!b.accountId}" target="_top">{!b.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!b.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!b.facilityType}" headerValue="Facility Type" headerClass="columnHeader"/>
+            <apex:column styleClass="currencyColumn" headerValue="Total Commitments" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.totalCommitments}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Total Outstandings" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.totalOutstandings}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Total Deposit Amount" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.totalDepositAmt}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Reserves" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.reserves}"/>
+                </apex:outputText>
+            </apex:column>                
+            <apex:column styleClass="numericColumn" value="{!b.CRR}" headerValue="CRR" headerClass="columnHeader"/>
+        </apex:pageBlockTable>
+
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="borrowers_total_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Square 1 Borrowers - Totals
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="panelSubtitle" layout="block">
+                (CDARs and Invest Not Included)
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <table class="list" border="0" cellpadding="0" cellspacing="0">
+            <thead>
+            <tr class="headerRow">
+                <th class="columnHeader">Total Commitments</th>
+                <th class="columnHeader">Total Outstandings</th>
+                <th class="columnHeader">Total Deposits</th>
+                <th class="columnHeader">Total Reserves</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="currencyColumn">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!borrowerTotalCommitments}"/>
+                    </apex:outputText>
+                </td>
+                <td class="currencyColumn">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!borrowerTotalOutstandings}"/>
+                    </apex:outputText>
+                </td>
+                <td class="currencyColumn">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!borrowerTotalDeposits}"/>
+                    </apex:outputText>
+                </td>
+                <td class="currencyColumn">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!borrowerTotalReserves}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        
+ 
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="depositors_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Square 1 Depositors (Non-Borrowers)
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="panelSubtitle" layout="block">
+                (CDARs and Invest Not Included In Deposits)
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:pageBlockTable value="{!Depositors}" var="d">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!d.accountId}" target="_top">{!d.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!d.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column styleClass="currencyColumn" headerValue="Collected Balance" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!d.collectedBalance}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="{!$Label.Average_Balance_This_Year}" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!d.averageBalance}"/>
+                </apex:outputText>
+            </apex:column>
+        </apex:pageBlockTable>        
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="depositors_total_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Square 1 Depositors (Non-Borrowers) - Totals
+            </apex:outputPanel>
+            <apex:outputPanel styleClass="panelSubtitle" layout="block">
+                (CDARs and Invest Not Included In Deposits)
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <table class="list" border="0" cellpadding="0" cellspacing="0">
+            <thead>
+            <tr class="headerRow">
+                <th class="columnHeader">Total Deposits</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td class="currencyColumn">
+                    <apex:outputText value="{0, number, currency}">
+                        <apex:param value="{!depositorTotalDeposits}"/>
+                    </apex:outputText>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="potential_borrowers_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Potential Borrowers in Pipeline
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:pageBlockTable value="{!pipelineBorrowers}" var="b">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!b.accountId}" target="_top">{!b.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!b.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!b.actionType}" headerValue="{!$Label.Action_Type}" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!b.stage}" headerValue="Stage" headerClass="columnHeader"/>
+            <apex:column style="width:200px" headerValue="Date Approved" headerClass="columnHeader">
+                <apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+                    <apex:param value="{!b.dateApproved}" /> 
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="TPL" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.TPL}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="New Est. Outstandings" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.newEstOutstandings}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="New Total Deposits" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!b.newTotalDeposits}"/>
+                </apex:outputText>
+            </apex:column>                
+        </apex:pageBlockTable>
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="potential_nonborrowers_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Potential Non-Borrowers in Pipeline
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:pageBlockTable value="{!pipelineNonBorrowers}" var="p">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!p.accountId}" target="_top">{!p.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!p.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!p.type}" headerValue="Type" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!p.stage}" headerValue="Stage" headerClass="columnHeader"/>
+            <apex:column style="width:200px" headerValue="Close Date" headerClass="columnHeader">
+                <apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+                    <apex:param value="{!p.closeDate}" /> 
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Total Deposits" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!p.totalDepositAmt}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Estimated Yearly Revenue" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!p.estimatedYearlyRevenue}"/>
+                </apex:outputText>
+            </apex:column>             
+        </apex:pageBlockTable>
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="lost_loans_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Lost Deals (Loans)
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:pageBlockTable value="{!lostLoans}" var="l">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!l.accountId}" target="_top">{!l.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!l.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!l.loanName}" headerValue="Loan Name" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!l.status}" headerValue="Loan Status" headerClass="columnHeader"/>
+            <apex:column style="width:200px" headerValue="Close Date" headerClass="columnHeader">
+                <apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+                    <apex:param value="{!l.closeDate}" /> 
+                </apex:outputText>
+            </apex:column>
+            <apex:column style="width:200px" value="{!l.lostTo}" headerValue="Lost To" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!l.reasonsLost}" headerValue="Reasons Lost" headerClass="columnHeader"/>
+        </apex:pageBlockTable>
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="lost_deposits_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Lost Deals (Deposits)
+            </apex:outputPanel>
+        </apex:outputPanel>              
+        <apex:pageBlockTable value="{!lostDeposits}" var="l">
+            <apex:column style="width:200px" headerValue="Partnered Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!l.accountId}" target="_top">{!l.accountName}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!l.accountOfficer}" headerValue="Venture Banker" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!l.type}" headerValue="Type" headerClass="columnHeader"/>
+            <apex:column style="width:200px" headerValue="Close Date" headerClass="columnHeader">
+                <apex:outputText value="{0, date, MM'/'dd'/'yyyy}">
+                    <apex:param value="{!l.closeDate}" /> 
+                </apex:outputText>
+            </apex:column>
+            <apex:column style="width:200px" value="{!l.reasonsLost}" headerValue="Reasons Lost" headerClass="columnHeader"/>
+        </apex:pageBlockTable>
+
+
+        <apex:outputPanel styleClass="panelHead" layout="block" id="referrals_title">
+            <apex:outputPanel styleClass="panelTitle" layout="block">
+                Referrals
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:pageBlockTable value="{!referrals}" var="r">
+            <apex:column style="width:200px" headerValue="Referred Account" headerClass="columnHeader">
+                <apex:outputLink value="/{!r.Account_Name__c}" target="_top">{!r.Account_Name__r.Name}</apex:outputLink>
+            </apex:column>
+            <apex:column style="width:200px" value="{!r.Referred_By__c}" headerValue="Referred By" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!r.Referred_To__c}" headerValue="Referred To" headerClass="columnHeader"/>
+            <apex:column style="width:200px" value="{!r.nRE__Referral_Status__c}" headerValue="Referral Status" headerClass="columnHeader"/>
+            <apex:column styleClass="currencyColumn" headerValue="Loan Commitment Amount" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!r.Loan_Commitment_Amount__c}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column styleClass="currencyColumn" headerValue="Total Deposits" headerClass="columnHeader">
+                <apex:outputText value="{0, number, currency}">
+                    <apex:param value="{!r.Total_Deposits__c}"/>
+                </apex:outputText>
+            </apex:column>
+            <apex:column style="width:200px" value="{!r.nRE__Referral_Details__c}" headerValue="Referral Details" headerClass="columnHeader"/>             
+        </apex:pageBlockTable>        
+
+
+    </apex:pageblock>
+</apex:page>
