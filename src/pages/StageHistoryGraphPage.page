@@ -1,0 +1,25 @@
+<apex:page standardController="Opportunity" extensions="StageHistoryGraphController">
+    <apex:composition template="{!$Page.ResponsiveTemplate}">
+        <apex:define name="content">
+            <apex:form >
+                <div class="light-bg">
+                    <!-- <div class="container-fluid"> -->
+                        <!-- <div class="tab-content"> -->
+                            <!-- Dashboard -->
+                            <!-- <div role="tabpanel" class="tab-pane" id="dashboard"> -->
+                                <table width="100%">
+                                    <tr>
+                                        <td width="100%">
+                                            <c:ReportChart title="" reportId="{!repId}" footer="" opportunityId="{!oppId}"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            <!-- </div> -->
+                            <!--- End Dashboard -->
+                        <!-- </div> -->
+                    <!-- </div> -->
+                </div>
+            </apex:form>
+        </apex:define>
+    </apex:composition>
+</apex:page>

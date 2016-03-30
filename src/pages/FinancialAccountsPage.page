@@ -1,0 +1,337 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" standardController="Account" extensions="FinancialAccountsController">
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+        <head>
+            <title>Financial Products Page</title>
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+            <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+        </head>
+        <body>
+            <!-- REQUIRED SLDS WRAPPER -->
+            <div class="slds">
+                <!-- MASTHEAD -->
+                <!-- <p class="slds-text-heading--label slds-m-bottom--small">Salesforce Lightning Design System Trailhead Module</p> -->
+                <!-- / MASTHEAD -->    
+                <!-- PAGE HEADER -->
+                <div class="slds-page-header" role="banner">
+                    <!-- LAYOUT GRID -->
+                    <div class="slds-grid">
+                        <!-- GRID COL -->
+                        <div class="slds-col">
+                            <!-- HEADING AREA -->
+                            <p class="slds-text-heading--label">Financial Accounts</p>
+                            <h1 id="type" class="slds-text-heading--medium">Loans</h1>
+                            <!-- /HEADING AREA -->	
+                        </div>
+                        <!-- GRID COL -->
+                        <c:FinancialProductButtons />
+                        <!-- <div class="slds-col slds-no-flex slds-align-middle">
+                            <div class="slds-button-group" role="group">
+                                <button id="loan" class="slds-button slds-button--neutral" onClick="newRecord()">
+                                	New Loan
+                                </button>
+                                <button id="deposit" class="slds-button slds-button--neutral" onClick="newRecord()">
+                                	New Deposit
+                                </button>
+                                <button id="treasury" class="slds-button slds-button--neutral" onClick="newRecord()">
+                                	New Treasury
+                                </button>
+                                <button id="wealth" class="slds-button slds-button--neutral" onClick="newRecord()">
+                                	New Wealth
+                                </button>
+                                <button id="insurance" class="slds-button slds-button--neutral" onClick="newRecord()">
+                                	New Insurance
+                                </button>
+                            </div>
+                        </div> -->
+                        <!-- / GRID COL -->
+                    </div>
+                    <!-- / LAYOUT GRID -->
+                </div>
+                <!-- / PAGE HEADER -->    
+                <!-- PRIMARY CONTENT WRAPPER -->
+                <div class="myapp">
+                    <!-- ACCOUNT LIST TABLE -->
+                    <div class="slds-tabs--default">
+                        <ul class="slds-tabs--default__nav" role="tablist">
+                            <li class="slds-tabs--default__item slds-text-heading--label slds-active" title="Item One" role="presentation">
+                                <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1" id="tab-default-1__item" onclick="selectTab(this,'Loans');">
+                                Loans
+                                </a>
+                            </li>
+                            <li class="slds-tabs--default__item slds-text-heading--label" title="Item Two" role="presentation">
+                                <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2" id="tab-default-2__item" onclick="selectTab(this,'Deposits');">
+                                Deposits
+                                </a>
+                            </li>
+                            <li class="slds-tabs--default__item slds-text-heading--label" title="Item Three" role="presentation">
+                                <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-3" id="tab-default-3__item" onclick="selectTab(this,'Treasury');">
+                                Treasury
+                                </a>
+                            </li>
+                            <li class="slds-tabs--default__item slds-text-heading--label" title="Item Four" role="presentation">
+                                <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-4" id="tab-default-4__item" onclick="selectTab(this,'Wealth');">
+                                Wealth
+                                </a>
+                            </li>
+                            <li class="slds-tabs--default__item slds-text-heading--label" title="Item Five" role="presentation">
+                                <a class="slds-tabs--default__link" href="#void" role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-5" id="tab-default-5__item" onclick="selectTab(this, 'Insurance');">
+                                Insurance
+                                </a>
+                            </li>
+                        </ul>
+                        <div id="tab-default-1" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item">
+					        <h2 id="no-loans" class="slds-text-heading--small">There are currently no loan products for this account.</h2>
+					        <table id="loan-table" class="slds-table slds-table--bordered">
+					            <thead>
+					                <tr class="slds-text-heading--label">
+					                    <apex:repeat value="{!LoanFields}" var="f">
+					                        <th class="slds-is-sortable" scope="col">
+					                            <div class="slds-truncate">
+					                                <apex:outputLabel value="{!f.Label}"/>
+					                                <button class="slds-button slds-button--icon-bare">
+					                                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+					                                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+					                                    </svg>
+					                                    <span class="slds-assistive-text">Sort</span>
+					                                </button>
+					                            </div>
+					                        </th>
+					                    </apex:repeat>
+					                </tr>
+					            </thead>
+					            <tbody>
+					                <apex:repeat value="{!loans}" var="l">
+					                    <tr class="slds-hint-parent">
+					                        <apex:repeat value="{!LoanFields}" var="f">
+					                            <td class="slds-truncate">
+					                                <apex:outputField value="{!l[f.fieldPath]}"/>
+					                            </td>
+					                        </apex:repeat>
+					                    </tr>
+					                </apex:repeat>
+					            </tbody>
+					        </table>
+					    </div>
+                        <div id="tab-default-2" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-2__item">
+					        <h2 id="no-deposits" class="slds-text-heading--small">There are currently no deposit products for this account.</h2>
+					        <table id="deposit-table" class="slds-table slds-table--bordered" rendered="{!deposits.size > 0}">
+					            <thead>
+					                <tr class="slds-text-heading--label">
+					                    <apex:repeat value="{!DepositFields}" var="f">
+					                        <th class="slds-is-sortable" scope="col">
+					                            <div class="slds-truncate">
+					                                <apex:outputLabel value="{!f.Label}"/>
+					                                <button class="slds-button slds-button--icon-bare">
+					                                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+					                                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+					                                    </svg>
+					                                    <span class="slds-assistive-text">Sort</span>
+					                                </button>
+					                            </div>
+					                        </th>
+					                    </apex:repeat>
+					                </tr>
+					            </thead>
+					            <tbody>
+					                <apex:repeat value="{!deposits}" var="d">
+					                    <tr class="slds-hint-parent">
+					                        <apex:repeat value="{!DepositFields}" var="f">
+					                            <td class="slds-truncate">
+					                                <apex:outputField value="{!d[f.fieldPath]}"/>
+					                            </td>
+					                        </apex:repeat>
+					                    </tr>
+					                </apex:repeat>
+					            </tbody>
+					        </table>
+					    </div>
+                        <div id="tab-default-3" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-3__item">
+                        	<h2 id="no-treasury" class="slds-text-heading--small">There are currently no treasury products for this account.</h2>
+                        	<table id="treasury-table" class="slds-table slds-table--bordered" rendered="{!treasuries.size > 0}">
+                                <thead>
+                                    <tr class="slds-text-heading--label">
+                                        <apex:repeat value="{!TreasuryFields}" var="f">
+                                            <th class="slds-is-sortable" scope="col">
+                                                <div class="slds-truncate">
+                                                    <apex:outputLabel value="{!f.Label}"/>
+                                                    <button class="slds-button slds-button--icon-bare">
+                                                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                                                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                                        </svg>
+                                                        <span class="slds-assistive-text">Sort</span>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                        </apex:repeat>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!treasuries}" var="t">
+                                        <tr class="slds-hint-parent">
+                                            <apex:repeat value="{!TreasuryFields}" var="f">
+                                                <td class="slds-truncate">
+                                                    <apex:outputField value="{!t[f.fieldPath]}"/>
+                                                </td>
+                                            </apex:repeat>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="tab-default-4" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-4__item">
+                        	<h2 id="no-wealth" class="slds-text-heading--small">There are currently no wealth products for this account.</h2>
+                        	<table id="wealth-table" class="slds-table slds-table--bordered" rendered="{!wealths.size > 0}">
+                                <thead>
+                                    <tr class="slds-text-heading--label">
+                                        <apex:repeat value="{!WealthFields}" var="f">
+                                            <th class="slds-is-sortable" scope="col">
+                                                <div class="slds-truncate">
+                                                    <apex:outputLabel value="{!f.Label}"/>
+                                                    <button class="slds-button slds-button--icon-bare">
+                                                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                                                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                                        </svg>
+                                                        <span class="slds-assistive-text">Sort</span>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                        </apex:repeat>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!wealths}" var="w">
+                                        <tr class="slds-hint-parent">
+                                            <apex:repeat value="{!WealthFields}" var="f">
+                                                <td class="slds-truncate">
+                                                    <apex:outputField value="{!w[f.fieldPath]}"/>
+                                                </td>
+                                            </apex:repeat>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="tab-default-5" class="slds-tabs--default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-5__item">
+                        	<h2 id="no-insurance" class="slds-text-heading--small">There are currently no insurance products for this account.</h2>
+                        	<table id="insurance-table" class="slds-table slds-table--bordered" rendered="{!insurances.size > 0}">
+                                <thead>
+                                    <tr class="slds-text-heading--label">
+                                        <apex:repeat value="{!InsuranceFields}" var="f">
+                                            <th class="slds-is-sortable" scope="col">
+                                                <div class="slds-truncate">
+                                                    <apex:outputLabel value="{!f.Label}"/>
+                                                    <button class="slds-button slds-button--icon-bare">
+                                                        <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                                                            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use>
+                                                        </svg>
+                                                        <span class="slds-assistive-text">Sort</span>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                        </apex:repeat>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat value="{!insurances}" var="i">
+                                        <tr class="slds-hint-parent">
+                                            <apex:repeat value="{!InsuranceFields}" var="f">
+                                                <td class="slds-truncate">
+                                                    <apex:outputField value="{!i[f.fieldPath]}"/>
+                                                </td>
+                                            </apex:repeat>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- / ACCOUNT LIST TABLE -->
+                </div>
+                <!-- / PRIMARY CONTENT WRAPPER -->
+            </div>
+            <!-- / REQUIRED SLDS WRAPPER -->    
+        </body>
+        <!-- JAVASCRIPT -->
+        <script>
+			function selectTab(elmnt,type) {
+			    // slds-active
+			    $(elmnt).parent("li").siblings(".slds-active").removeClass("slds-active");
+			    $(elmnt).parent("li").addClass("slds-active");
+
+			    // tabindex
+			    $(elmnt).parent("li").siblings().children("a").attr("tabindex", -1);
+			    $(elmnt).attr("tabindex", 0);
+
+			    // aria-selected
+			    $(elmnt).parent("li").siblings().children("a").attr("aria-selected", false);
+			    $(elmnt).attr("aria-selected", true);
+
+			    // hiding previouly selected tab (slds-show/slds-hide)
+			    $(elmnt).closest(".slds-tabs--default").children("div[role='tabpanel'].slds-show").addClass("slds-hide");
+			    $(elmnt).closest(".slds-tabs--default").children("div[role='tabpanel'].slds-show").removeClass("slds-show");
+			    // displaying newly selected tab (slds-show/slds-hide)
+			    $(elmnt).closest(".slds-tabs--default").children("div[aria-labelledby='"+elmnt.id+"']").addClass("slds-show");
+			    $(elmnt).closest(".slds-tabs--default").children("div[aria-labelledby='"+elmnt.id+"']").removeClass("slds-hide");
+
+			    document.getElementById("type").innerHTML = type;
+			}
+
+            function newRecord() {
+             // var accountName = document.getElementById("accountName").value;
+             // var account = new SObjectModel.Account();
+             // account.create({Name: accountName}, function(error, records) {
+             //   if (error) {
+             //     alert(error.message);
+             //   } else {
+             //     updateOutputDiv();
+             //   }
+             // });
+             // return false;
+               window.open('http://google.com','_blank');
+            }
+
+		    $( document ).ready(function() {
+		        if ({!loans.size > 0}) {
+		            document.getElementById("no-loans").style.visibility = "hidden";
+		            document.getElementById("loan-table").style.visibility = "visible";
+		        } else {
+		        	document.getElementById("no-loans").style.visibility = "visible";
+		            document.getElementById("loan-table").style.visibility = "hidden";
+		        }
+
+		        if ({!deposits.size > 0}) {
+		        	document.getElementById("no-deposits").style.visibility = "hidden";
+		            document.getElementById("deposit-table").style.visibility = "visible";
+		        } else {
+		        	document.getElementById("no-deposits").style.visibility = "visible";
+		            document.getElementById("deposit-table").style.visibility = "hidden";
+		        }
+
+		        if ({!treasuries.size > 0}) {
+		        	document.getElementById("no-treasury").style.visibility = "hidden";
+		            document.getElementById("treasury-table").style.visibility = "visible";
+		        } else {
+		        	document.getElementById("no-treasury").style.visibility = "visible";
+		            document.getElementById("treasury-table").style.visibility = "hidden";
+		        }
+
+		        if ({!wealths.size > 0}) {
+		        	document.getElementById("no-wealth").style.visibility = "hidden";
+		            document.getElementById("wealth-table").style.visibility = "visible";
+		        } else {
+		        	document.getElementById("no-wealth").style.visibility = "visible";
+		            document.getElementById("wealth-table").style.visibility = "hidden";
+		        }
+
+		        if ({!insurances.size > 0}) {
+		        	document.getElementById("no-insurance").style.visibility = "hidden";
+		            document.getElementById("insurance-table").style.visibility = "visible";
+		        } else {
+		        	document.getElementById("no-insurance").style.visibility = "visible";
+		            document.getElementById("insurance-table").style.visibility = "hidden";
+		        }
+			});
+        </script>
+        <!-- / JAVASCRIPT -->    
+    </html>
+</apex:page>

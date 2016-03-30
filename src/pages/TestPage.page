@@ -1,0 +1,39 @@
+<apex:page standardController="Opportunity" extensions="TestController">
+    <script>
+        // Build the chart data array in JavaScript
+        var data = new Array();
+    </script>
+    <apex:repeat value="{!dataMap}" var="currenyCode">
+        <script type="text/javascript">
+            var product = {};
+        </script>
+        <apex:repeat value="{!dataMap[currenyCode]}" var="convertedAmount">
+            <!-- {!currenyCode} {!convertedAmount} {!dataMap[currenyCode][convertedAmount]}
+                -->
+            <script type="text/javascript">
+                product['{!convertedAmount}'] = {!dataMap[currenyCode][convertedAmount]};
+                 
+                product['name'] = '{!currenyCode}';
+            </script>
+        </apex:repeat>
+        <script type="text/javascript">
+            data.push(product);
+            console.log(data);
+        </script>
+    </apex:repeat>
+    <apex:chart data="data" height="200" width="100%">
+        <apex:legend position="bottom"/>
+
+        <apex:axis type="Category" position="left" fields="{!yfield}">
+            <apex:chartLabel display="over"/>
+        </apex:axis>
+
+        <apex:axis type="Category" position="bottom" fields="name">
+            <apex:chartLabel display="over"/>
+        </apex:axis>
+
+        <apex:barSeries orientation="horizontal" axis="left" stacked="true" xField="{!yfield}" yField="name">
+            <apex:chartTips height="20" width="120"/>
+        </apex:barSeries>
+    </apex:chart>
+</apex:page>

@@ -1,0 +1,21 @@
+<apex:component >
+    <div class="slds-col slds-no-flex slds-align-middle">
+        <div class="slds-button-group" role="group">
+            <button id="loan" class="slds-button slds-button--neutral" onClick="newRecord()">
+            New Loan
+            </button>
+            <button id="deposit" class="slds-button slds-button--neutral" onClick="newRecord()">
+            New Deposit
+            </button>
+            <button id="treasury" class="slds-button slds-button--neutral" onClick="newRecord()">
+            New Treasury
+            </button>
+            <button id="wealth" class="slds-button slds-button--neutral" onClick="newRecord()">
+            New Wealth
+            </button>
+            <button id="insurance" class="slds-button slds-button--neutral" onClick="newRecord()">
+            New Insurance
+            </button>
+        </div>
+    </div>
+</apex:component>

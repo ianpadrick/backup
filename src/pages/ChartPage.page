@@ -1,0 +1,16 @@
+<apex:page controller="ChartController">
+    <apex:chart data="{!data}" height="400" width="500">
+        <apex:legend position="left"/>
+        <apex:axis type="Numeric" position="left" title="Stage Name" grid="true"
+            fields="stageName3" dashSize="2">
+            <apex:chartLabel />
+        </apex:axis>
+        <apex:axis type="Category" position="bottom" fields="oppName" title="Stacked Bars">
+            <apex:chartLabel rotate="315"/>
+        </apex:axis>
+        <apex:barSeries orientation="horizontal" axis="left" stacked="true"
+            xField="stageName3" 
+            yField="oppName" 
+        title="MacDonald,Promas,Worle" />
+    </apex:chart>        
+</apex:page>

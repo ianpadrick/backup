@@ -1,0 +1,35 @@
+<apex:component controller="FinancialAccountsController">
+    <div id="tab-default-1" class="slds-tabs--default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item">
+        <h2 id="no-loans" class="slds-text-heading--small">There are currently no loan products for this account.</h2>
+        <table id="loan-table" class="slds-table slds-table--bordered">
+            <thead>
+                <tr class="slds-text-heading--label">
+                    <apex:repeat value="{!LoanFields}" var="f">
+                        <th class="slds-is-sortable" scope="col">
+                            <div class="slds-truncate">
+                                <apex:outputLabel value="{!f.Label}"/>
+                                <button class="slds-button slds-button--icon-bare">
+                                    <svg aria-hidden="true" class="slds-button__icon slds-button__icon--small">
+                                        <!-- <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#arrowdown"></use> -->
+                                    </svg>
+                                    <span class="slds-assistive-text">Sort</span>
+                                </button>
+                            </div>
+                        </th>
+                    </apex:repeat>
+                </tr>
+            </thead>
+            <tbody>
+                <apex:repeat value="{!loans}" var="l">
+                    <tr class="slds-hint-parent">
+                        <apex:repeat value="{!LoanFields}" var="f">
+                            <td class="slds-truncate">
+                                <apex:outputField value="{!l[f.fieldPath]}"/>
+                            </td>
+                        </apex:repeat>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+        </table>
+    </div>
+</apex:component>

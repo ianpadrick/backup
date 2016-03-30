@@ -1,0 +1,28 @@
+<apex:component >
+
+    <apex:attribute name="title" description="Title of the Chart" type="String"/>
+    <apex:attribute name="reportId" description="Id the Report" type="String"/>
+    <apex:attribute name="footer" description="Chart Footer" type="String"/>
+    <apex:attribute name="opportunityId" description="Id of the Opportunity" type="String"/>
+    
+    <div class="col-sm-12 col-md-6 col-lg-4">
+        <div class="panel">
+            <div class="panel-body text-center">
+                <h3 class="panel-title">{!Title}</h3>
+                <div class="chart-wrap">
+                    <!-- <analytics:reportChart reportId="{!reportId}" size="small" cacheResults="true" showRefreshButton="false"></analytics:reportChart> -->
+                    <analytics:reportChart reportId="{!reportId}"
+                        filter="{column:'OPPORTUNITY_ID', operator:'equals', value:'{!opportunityId}'}"
+                        cacheResults="false"
+                        size="small"
+                        showRefreshButton="false">
+                    </analytics:reportChart>
+                </div>
+            </div>
+            <ul class="list-group">
+                <li class="list-group-item">{!footer}</li>
+            </ul>
+        </div>
+    </div>
+    
+</apex:component>
